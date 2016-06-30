@@ -34,9 +34,9 @@ public class MoveEntityPacket extends DataPacket {
             this.putFloat((float) entry.x);
             this.putFloat((float) entry.y);
             this.putFloat((float) entry.z);
-            this.putByte((byte) (entry.pitch * 0.71));
-            this.putByte((byte) (entry.headyaw * 0.71));
-            this.putByte((byte) (entry.yaw * 0.71));
+            this.putByte((byte) (entry.pitch * 0.71111));
+            this.putByte((byte) (entry.headyaw * 0.71111));
+            this.putByte((byte) (entry.yaw * 0.71111));
         }
     }
 
