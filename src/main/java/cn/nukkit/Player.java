@@ -3294,38 +3294,7 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
     }
 
     public void save(boolean async) {
-        if (this.closed) {
-            throw new IllegalStateException("Tried to save closed player");
-        }
 
-        super.saveNBT();
-
-        if (this.level != null) {
-            this.namedTag.putString("Level", this.level.getFolderName());
-            if (this.spawnPosition != null && this.spawnPosition.getLevel() != null) {
-                this.namedTag.putString("SpawnLevel", this.spawnPosition.getLevel().getFolderName());
-                this.namedTag.putInt("SpawnX", (int) this.spawnPosition.x);
-                this.namedTag.putInt("SpawnY", (int) this.spawnPosition.y);
-                this.namedTag.putInt("SpawnZ", (int) this.spawnPosition.z);
-            }
-
-            //todo save achievement
-
-            this.namedTag.putInt("playerGameType", this.gamemode);
-            this.namedTag.putLong("lastPlayed", System.currentTimeMillis() / 1000);
-
-            this.namedTag.putString("lastIP", this.getAddress());
-
-            this.namedTag.putInt("EXP", this.getExperience());
-            this.namedTag.putInt("expLevel", this.getExperienceLevel());
-
-            this.namedTag.putInt("foodLevel", this.getFoodData().getLevel());
-            this.namedTag.putFloat("foodSaturationLevel", this.getFoodData().getFoodSaturationLevel());
-
-            if (!"".equals(this.username) && this.namedTag != null) {
-                this.server.saveOfflinePlayerData(this.username, this.namedTag, async);
-            }
-        }
     }
 
     public String getName() {
