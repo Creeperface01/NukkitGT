@@ -76,7 +76,7 @@ public class Level implements ChunkManager, Metadatable {
 
 	private Map<Long, BlockEntity> blockEntities = new HashMap<>();
 
-	private Map<Long, SetEntityMotionPacket.Entry> motionToSend = new HashMap<>();
+	private Map<Long, SetEntityMotionPacket> motionToSend = new HashMap<>();
 	private Map<Long, MoveEntityPacket> moveToSend = new HashMap<>();
 	private Map<Long, MovePlayerPacket> playerMoveToSend = new HashMap<>();
 
@@ -732,9 +732,7 @@ public class Level implements ChunkManager, Metadatable {
 		this.moveToSend = new HashMap<>();
 
 		{
-			SetEntityMotionPacket pk = new SetEntityMotionPacket();
-			pk.entities = this.motionToSend.values().stream().toArray(SetEntityMotionPacket.Entry[]::new);
-			movementPackets.add(pk);
+			movementPackets.addAll(motionToSend.values());
 		}
 		this.motionToSend = new HashMap<>();
 
@@ -2657,7 +2655,13 @@ public class Level implements ChunkManager, Metadatable {
 	}
 
 	public void addEntityMotion(int chunkX, int chunkZ, long entityId, double x, double y, double z) {
-		this.motionToSend.put(entityId, new SetEntityMotionPacket.Entry(entityId, x, y, z));
+		SetEntityMotionPacket pk = new SetEntityMotionPacket();
+		pk.entityId = entityId;
+		pk.motionX = x;
+		pk.motionY = y;
+		pk.motionZ = z;
+
+		this.motionToSend.put(entityId, pk);
 	}
 
 	public void addEntityMovement(int chunkX, int chunkZ, long entityId, double x, double y, double z, double yaw,
