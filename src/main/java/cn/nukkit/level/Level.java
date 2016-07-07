@@ -2669,7 +2669,16 @@ public class Level implements ChunkManager, Metadatable {
 		pk.motionY = y;
 		pk.motionZ = z;
 
-		this.motionToSend.get(Level.chunkHash(chunkX, chunkZ)).put(entityId, pk);
+		String index = Level.chunkHash(chunkX, chunkZ);
+
+		Map<Long, SetEntityMotionPacket> data = this.motionToSend.get(index);
+
+		if(data == null){
+			data = new HashMap<>();
+			motionToSend.put(index, data);
+		}
+
+		data.put(entityId, pk);
 	}
 
 	public void addEntityMovement(int chunkX, int chunkZ, long entityId, double x, double y, double z, double yaw,
@@ -2683,7 +2692,16 @@ public class Level implements ChunkManager, Metadatable {
 		pk.headYaw = (float) yaw;
 		pk.pitch = (float) pitch;
 
-		this.moveToSend.get(Level.chunkHash(chunkX, chunkZ)).put(entityId, pk);
+		String index = Level.chunkHash(chunkX, chunkZ);
+
+		Map<Long, MoveEntityPacket> data = this.moveToSend.get(index);
+
+		if(data == null){
+			data = new HashMap<>();
+			moveToSend.put(index, data);
+		}
+
+		data.put(entityId, pk);
 	}
 
 	public boolean isRaining() {
