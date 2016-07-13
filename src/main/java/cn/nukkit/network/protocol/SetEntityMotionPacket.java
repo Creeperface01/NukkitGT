@@ -27,7 +27,7 @@ public class SetEntityMotionPacket extends DataPacket {
         this.reset();
 
         this.putLong(entityId);
-        this.putFloat((float) motionX); 
+        this.putFloat((float) motionX);
         this.putFloat((float) motionY);
         this.putFloat((float) motionZ);
 
