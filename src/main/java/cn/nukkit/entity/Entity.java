@@ -108,7 +108,8 @@ public abstract class Entity extends Location implements Metadatable {
 
     protected EntityDamageEvent lastDamageCause = null;
 
-    private List<Block> blocksAround = new ArrayList<>();
+    protected List<Block> collisionBlocks = new ArrayList<>();
+    protected List<Block> groundBlocks = new ArrayList<>();
 
     public double lastX;
     public double lastY;
@@ -807,7 +808,6 @@ public abstract class Entity extends Location implements Metadatable {
 
     public boolean entityBaseTick(int tickDiff) {
         Timings.timerEntityBaseTick.startTiming();
-        this.blocksAround = null;
         this.justCreated = false;
 
         if (!this.isAlive()) {
@@ -834,6 +834,10 @@ public abstract class Entity extends Location implements Metadatable {
         }
 
         boolean hasUpdate = false;
+
+        if (!this.isPlayer) {
+            this.collisionBlocks = null;
+        }
 
         this.checkBlockCollision();
 
@@ -1106,7 +1110,7 @@ public abstract class Entity extends Location implements Metadatable {
     }
 
     public boolean isInsideOfFire() {
-        for (Block block : this.getBlocksAround()) {
+        for (Block block : this.getCollisionBlocks()) {
             if (block instanceof BlockFire) {
                 return true;
             }
@@ -1274,36 +1278,45 @@ public abstract class Entity extends Location implements Metadatable {
         this.onGround = (movY != dy && movY < 0);
     }
 
-    public List<Block> getBlocksAround() {
-        if (this.blocksAround == null) {
-            int minX = NukkitMath.floorDouble(this.boundingBox.minX);
-            int minY = NukkitMath.floorDouble(this.boundingBox.minY);
-            int minZ = NukkitMath.floorDouble(this.boundingBox.minZ);
-            int maxX = NukkitMath.ceilDouble(this.boundingBox.maxX);
-            int maxY = NukkitMath.ceilDouble(this.boundingBox.maxY);
-            int maxZ = NukkitMath.ceilDouble(this.boundingBox.maxZ);
+    public List<Block> getGroundBlocks() {
+        return this.groundBlocks;
+    }
 
-            this.blocksAround = new ArrayList<>();
+    public List<Block> getCollisionBlocks() {
+        if (this.collisionBlocks == null) {
+            AxisAlignedBB bb = this.boundingBox;
+
+            int minX = NukkitMath.floorDouble(bb.minX);
+            int minY = NukkitMath.floorDouble(bb.minY);
+            int minZ = NukkitMath.floorDouble(bb.minZ);
+            int maxX = NukkitMath.ceilDouble(bb.maxX);
+            int maxY = NukkitMath.ceilDouble(bb.maxY);
+            int maxZ = NukkitMath.ceilDouble(bb.maxZ);
+
+            this.collisionBlocks = new ArrayList<>();
 
             for (int z = minZ; z <= maxZ; ++z) {
                 for (int x = minX; x <= maxX; ++x) {
                     for (int y = minY; y <= maxY; ++y) {
                         Block block = this.level.getBlock(this.temporalVector.setComponents(x, y, z));
-                        if (block.hasEntityCollision()) {
-                            this.blocksAround.add(block);
+                        if (block.collidesWithBB(bb)) {
+                            this.collisionBlocks.add(block);
                         }
                     }
                 }
             }
         }
 
-        return this.blocksAround;
+        return this.collisionBlocks;
     }
 
     protected void checkBlockCollision() {
         Vector3 vector = new Vector3(0, 0, 0);
 
-        for (Block block : this.getBlocksAround()) {
+        for (Block block : this.getCollisionBlocks()) {
+            if (!block.hasEntityCollision()) {
+                continue;
+            }
             block.onEntityCollide(this);
             block.addVelocityToEntity(this, vector);
         }

@@ -1108,7 +1108,7 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
 
     @Override
     protected void checkGroundState(double movX, double movY, double movZ, double dx, double dy, double dz) {
-        if (!this.onGround || movX != 0 || movY != 0 || movZ != 0) {
+        if (!this.onGround && (movX != 0 || movY != 0 || movZ != 0)) {
             boolean onGround = false;
 
             AxisAlignedBB bb = this.boundingBox.clone();
@@ -1117,7 +1117,7 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
 
             AxisAlignedBB realBB = this.boundingBox.clone();
             realBB.maxY = realBB.minY + 0.1;
-            realBB.minY -= 0.2;
+            realBB.minY -= 0.3;
 
             int minX = NukkitMath.floorDouble(bb.minX);
             int minY = NukkitMath.floorDouble(bb.minY);
@@ -1147,8 +1147,16 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
 
     @Override
     protected void checkBlockCollision() {
-        for (Block block : this.getBlocksAround()) {
-            block.onEntityCollide(this);
+        int inPortalTicks = this.inPortalTicks;
+
+        for (Block block : this.getCollisionBlocks()) {
+            if (block.hasEntityCollision()) {
+                block.onEntityCollide(this);
+            }
+        }
+
+        if (inPortalTicks == this.inPortalTicks) {
+            this.inPortalTicks = 0;
         }
     }
 
@@ -1464,6 +1472,10 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
         }
 
         if (this.spawned) {
+            if (this.newPosition == null || !this.newPosition.equals(this)) {
+                this.collisionBlocks = null;
+            }
+
             this.processMovement(tickDiff);
 
             this.entityBaseTick(tickDiff);
@@ -1620,6 +1632,7 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
             return;
         }
 
+        this.onGround = true;
         this.playedBefore = (nbt.getLong("lastPlayed") - nbt.getLong("firstPlayed")) > 1;
 
         nbt.putString("NameTag", this.username);
