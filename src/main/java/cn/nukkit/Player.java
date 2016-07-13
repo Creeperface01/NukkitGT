@@ -1416,7 +1416,10 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
             if (this.chunk != null) {
                 this.level.addEntityMotion(this.chunk.getX(), this.chunk.getZ(), this.getId(), this.motionX, this.motionY, this.motionZ);
                 SetEntityMotionPacket pk = new SetEntityMotionPacket();
-                pk.entities = new SetEntityMotionPacket.Entry[]{new SetEntityMotionPacket.Entry(0, (float) motion.x, (float) motion.y, (float) motion.z)};
+                pk.entityId = 0;
+                pk.motionX = motion.x;
+                pk.motionY = motion.y;
+                pk.motionZ = motion.z;
                 this.dataPacket(pk);
             }
 
@@ -1433,7 +1436,7 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
 
     @Override
     public void addMovement(double x, double y, double z, double yaw, double pitch, double headYaw) {
-        this.level.addPlayerMovement(this.chunk.getX(), this.chunk.getZ(), this.id, x, y, z, yaw, pitch, this.isOnGround());
+        this.level.addEntityMovement(this.chunk.getX(), this.chunk.getZ(), this.id, x, y, z, yaw, pitch, yaw);
     }
 
     @Override
