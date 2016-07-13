@@ -119,12 +119,6 @@ public class BlockCactus extends BlockTransparent {
     }
 
     @Override
-    public boolean collidesWithBB(AxisAlignedBB bb) {
-        AxisAlignedBB BB = this.getBoundingBox().clone().setBounds(this.x, this.y, this.z, this.x + 1, this.y + 1.0625, this.z + 1);
-        return bb.intersectsWith(BB);
-    }
-
-    @Override
     public int[][] getDrops(Item item) {
         return new int[][]{
                 {this.getId(), 0, 1}
