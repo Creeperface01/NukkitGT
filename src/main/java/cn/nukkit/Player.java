@@ -1397,10 +1397,7 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
             if (this.chunk != null) {
                 this.level.addEntityMotion(this.chunk.getX(), this.chunk.getZ(), this.getId(), this.motionX, this.motionY, this.motionZ);
                 SetEntityMotionPacket pk = new SetEntityMotionPacket();
-                pk.entityId = 0;
-                pk.motionX = motion.x;
-                pk.motionY = motion.y;
-                pk.motionZ = motion.z;
+                pk.entities = new SetEntityMotionPacket.Entry[]{new SetEntityMotionPacket.Entry(0, motion.x, motion.y, motion.z)};
 
                 this.dataPacket(pk);
             }

@@ -76,8 +76,8 @@ public class Level implements ChunkManager, Metadatable {
 
 	private Map<Long, BlockEntity> blockEntities = new HashMap<>();
 
-	private Map<String, Map<Long, SetEntityMotionPacket>> motionToSend = new HashMap<>();
-	private Map<String, Map<Long, MoveEntityPacket>> moveToSend = new HashMap<>();
+	private Map<String, List<SetEntityMotionPacket.Entry>> motionToSend = new HashMap<>();
+	private Map<String, List<MoveEntityPacket.Entry>> moveToSend = new HashMap<>();
 
 	private Map<Long, Player> players = new HashMap<>();
 
@@ -725,22 +725,24 @@ public class Level implements ChunkManager, Metadatable {
 
 		//List<DataPacket> movementPackets = new ArrayList<>();
 
-		for(Map.Entry<String, Map<Long, MoveEntityPacket>> entry : moveToSend.entrySet()){
+		for (Map.Entry<String, List<MoveEntityPacket.Entry>> entry : moveToSend.entrySet()) {
 			Chunk.Entry chunkEntry =  getChunkXZ(entry.getKey());
 
-			for(MoveEntityPacket pk : entry.getValue().values()) {
-				addChunkPacket(chunkEntry.chunkX, chunkEntry.chunkZ, pk);
-			}
+			MoveEntityPacket pk = new MoveEntityPacket();
+			pk.entities = entry.getValue().stream().toArray(MoveEntityPacket.Entry[]::new);
+
+			addChunkPacket(chunkEntry.chunkX, chunkEntry.chunkZ, pk);
 		}
 		this.moveToSend = new HashMap<>();
 
 
-		for(Map.Entry<String, Map<Long, SetEntityMotionPacket>> entry : motionToSend.entrySet()){
+		for (Map.Entry<String, List<SetEntityMotionPacket.Entry>> entry : motionToSend.entrySet()) {
 			Chunk.Entry chunkEntry =  getChunkXZ(entry.getKey());
 
-			for(SetEntityMotionPacket pk : entry.getValue().values()) {
-				addChunkPacket(chunkEntry.chunkX, chunkEntry.chunkZ, pk);
-			}
+			SetEntityMotionPacket pk = new SetEntityMotionPacket();
+			pk.entities = entry.getValue().stream().toArray(SetEntityMotionPacket.Entry[]::new);
+
+			addChunkPacket(chunkEntry.chunkX, chunkEntry.chunkZ, pk);
 		}
 		this.motionToSend = new HashMap<>();
 
@@ -2663,45 +2665,28 @@ public class Level implements ChunkManager, Metadatable {
 	}
 
 	public void addEntityMotion(int chunkX, int chunkZ, long entityId, double x, double y, double z) {
-		SetEntityMotionPacket pk = new SetEntityMotionPacket();
-		pk.entityId = entityId;
-		pk.motionX = x;
-		pk.motionY = y;
-		pk.motionZ = z;
+		String index = chunkHash(chunkX, chunkZ);
+		List<SetEntityMotionPacket.Entry> entries = this.motionToSend.get(index);
 
-		String index = Level.chunkHash(chunkX, chunkZ);
-
-		Map<Long, SetEntityMotionPacket> data = this.motionToSend.get(index);
-
-		if(data == null){
-			data = new HashMap<>();
-			motionToSend.put(index, data);
+		if (entries == null) {
+			entries = new ArrayList<>();
+			motionToSend.put(index, entries);
 		}
 
-		data.put(entityId, pk);
+		entries.add(new SetEntityMotionPacket.Entry(entityId, x, y, z));
 	}
 
 	public void addEntityMovement(int chunkX, int chunkZ, long entityId, double x, double y, double z, double yaw,
 			double pitch, double headYaw) {
-		MoveEntityPacket pk = new MoveEntityPacket();
-		pk.eid = entityId;
-		pk.x = (float) x;
-		pk.y = (float) y;
-		pk.z = (float) z;
-		pk.yaw = (float) yaw;
-		pk.headYaw = (float) yaw;
-		pk.pitch = (float) pitch;
+		String index = chunkHash(chunkX, chunkZ);
+		List<MoveEntityPacket.Entry> entries = this.moveToSend.get(index);
 
-		String index = Level.chunkHash(chunkX, chunkZ);
-
-		Map<Long, MoveEntityPacket> data = this.moveToSend.get(index);
-
-		if(data == null){
-			data = new HashMap<>();
-			moveToSend.put(index, data);
+		if (entries == null) {
+			entries = new ArrayList<>();
+			moveToSend.put(index, entries);
 		}
 
-		data.put(entityId, pk);
+		entries.add(new MoveEntityPacket.Entry(entityId, x, y, z, yaw, yaw, pitch));
 	}
 
 	public boolean isRaining() {
