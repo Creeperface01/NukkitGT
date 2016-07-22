@@ -189,6 +189,8 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
 
     private int hash;
 
+    private Vector3 clientGround = new Vector3();
+
     public TranslationContainer getLeaveMessage() {
         return new TranslationContainer(TextFormat.YELLOW + "%multiplayer.player.left", this.getDisplayName());
     }
@@ -1081,7 +1083,7 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
 
     @Override
     protected void checkGroundState(double movX, double movY, double movZ, double dx, double dy, double dz) {
-        if (!this.onGround) {
+        if (!this.onGround || movX != 0 || movY != 0 || movZ != 0) {
             boolean onGround = false;
 
             AxisAlignedBB bb = this.boundingBox.clone();
@@ -1882,7 +1884,11 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
                     this.forceMovement = null;
                 }
 
-                this.onGround = movePlayerPacket.onGround;
+                /*if(movePlayerPacket.onGround){
+                    clientGround = new Vector3(movePlayerPacket.x, movePlayerPacket.y, movePlayerPacket.z);
+                } else {
+                    clientGround = null;
+                }*/
 
                 if (riding != null) {
                     if (riding instanceof EntityBoat) {
