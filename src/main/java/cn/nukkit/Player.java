@@ -1101,10 +1101,13 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
             int maxY = NukkitMath.ceilDouble(bb.maxY);
             int maxZ = NukkitMath.ceilDouble(bb.maxZ);
 
+            List<Block> blocks = new ArrayList<>();
+
             for (int z = minZ; z <= maxZ; ++z) {
                 for (int x = minX; x <= maxX; ++x) {
                     for (int y = minY; y <= maxY; ++y) {
                         Block block = this.level.getBlock(this.temporalVector.setComponents(x, y, z));
+                        blocks.add(block);
 
                         if (!block.canPassThrough() && block.collidesWithBB(realBB)) {
                             onGround = true;
@@ -1114,6 +1117,7 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
                 }
             }
 
+            this.groundBlocks = blocks;
             this.onGround = onGround;
         }
 
