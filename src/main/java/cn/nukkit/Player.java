@@ -1823,7 +1823,7 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
                 }
 
                 String message;
-                if (loginPacket.getProtocol() != ProtocolInfo.CURRENT_PROTOCOL) {
+                if (loginPacket.getProtocol() < ProtocolInfo.ACCEPTED_PROTOCOL) {
                     if (loginPacket.getProtocol() < ProtocolInfo.CURRENT_PROTOCOL) {
                         message = "disconnectionScreen.outdatedClient";
 
