@@ -78,6 +78,7 @@ public class Level implements ChunkManager, Metadatable {
 
 	private Map<String, List<SetEntityMotionPacket.Entry>> motionToSend = new HashMap<>();
 	private Map<String, List<MoveEntityPacket.Entry>> moveToSend = new HashMap<>();
+	private Map<String, Map<Long, MovePlayerPacket>> playerMoveToSend = new HashMap<>();
 
 	private Map<Long, Player> players = new HashMap<>();
 
@@ -745,6 +746,14 @@ public class Level implements ChunkManager, Metadatable {
 			addChunkPacket(chunkEntry.chunkX, chunkEntry.chunkZ, pk);
 		}
 		this.motionToSend = new HashMap<>();
+
+		for (String index : this.playerMoveToSend.keySet()) {
+			Chunk.Entry entry = Level.getChunkXZ(index);
+			for (MovePlayerPacket packet : this.playerMoveToSend.get(index).values()) {
+				this.addChunkPacket(entry.chunkX, entry.chunkZ, packet);
+			}
+		}
+		this.playerMoveToSend = new HashMap<>();
 
 		/*{
 			movementPackets.addAll(this.playerMoveToSend.values());
@@ -2687,6 +2696,25 @@ public class Level implements ChunkManager, Metadatable {
 		}
 
 		entries.add(new MoveEntityPacket.Entry(entityId, x, y, z, yaw, yaw, pitch));
+	}
+
+	public void addPlayerMovement(int chunkX, int chunkZ, long entityId, double x, double y, double z, double yaw,
+								  double pitch, boolean onGround) {
+		String index = Level.chunkHash(chunkX, chunkZ);
+		if (!this.playerMoveToSend.containsKey(index)) {
+			this.playerMoveToSend.put(index, new HashMap<>());
+		}
+
+		MovePlayerPacket pk = new MovePlayerPacket();
+		pk.eid = entityId;
+		pk.x = (float) x;
+		pk.y = (float) y;
+		pk.z = (float) z;
+		pk.yaw = (float) yaw;
+		pk.headYaw = (float) yaw;
+		pk.pitch = (float) pitch;
+		pk.onGround = onGround;
+		this.playerMoveToSend.get(index).put(entityId, pk);
 	}
 
 	public boolean isRaining() {
