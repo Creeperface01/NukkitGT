@@ -1126,16 +1126,10 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
 
     @Override
     protected void checkBlockCollision() {
-        int inPortalTicks = this.inPortalTicks;
-
         for (Block block : this.getCollisionBlocks()) {
             if (block.hasEntityCollision()) {
                 block.onEntityCollide(this);
             }
-        }
-
-        if(inPortalTicks == this.inPortalTicks){
-            this.inPortalTicks = 0;
         }
     }
 
@@ -1488,6 +1482,17 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
                                 return false;
                             }
                         }
+                    }
+
+                    if(inPortalTicks >= 80){
+                        EntityPortalEnterEvent ev = new EntityPortalEnterEvent(this, EntityPortalEnterEvent.TYPE_NETHER);
+                        this.level.getServer().getPluginManager().callEvent(ev);
+
+                        if (!ev.isCancelled()) {
+                            //TODO: teleport to the nether
+                        }
+
+                        inPortalTicks = 0;
                     }
 
                     if (this.y > highestPosition) {
