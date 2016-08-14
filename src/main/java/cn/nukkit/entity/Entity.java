@@ -1310,24 +1310,6 @@ public abstract class Entity extends Location implements Metadatable {
     }
 
     protected void checkBlockCollision() {
-        Vector3 vector = new Vector3(0, 0, 0);
-
-        for (Block block : this.getCollisionBlocks()) {
-            if (!block.hasEntityCollision()) {
-                continue;
-            }
-
-            block.onEntityCollide(this);
-            block.addVelocityToEntity(this, vector);
-        }
-
-        if (vector.lengthSquared() > 0) {
-            vector = vector.normalize();
-            double d = 0.014d;
-            this.motionX += vector.x * d;
-            this.motionY += vector.y * d;
-            this.motionZ += vector.z * d;
-        }
     }
 
     public boolean setPositionAndRotation(Vector3 pos, double yaw, double pitch) {

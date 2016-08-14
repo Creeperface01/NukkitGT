@@ -181,46 +181,6 @@ public abstract class EntityLiving extends Entity implements EntityDamageable {
     public boolean entityBaseTick(int tickDiff) {
         boolean hasUpdate = super.entityBaseTick(tickDiff);
 
-        if (this.isAlive()) {
-            if (this.isInsideOfSolid()) {
-                hasUpdate = true;
-                EntityDamageEvent ev = new EntityDamageEvent(this, EntityDamageEvent.CAUSE_SUFFOCATION, 1);
-                this.attack(ev);
-            }
-
-            if (!this.hasEffect(Effect.WATER_BREATHING) && this.isInsideOfWater()) {
-                if (this instanceof EntityWaterAnimal) {
-                    this.setDataProperty(new ShortEntityData(DATA_AIR, 300));
-                } else {
-                    hasUpdate = true;
-                    int airTicks = this.getDataPropertyShort(DATA_AIR) - tickDiff;
-
-                    if (airTicks <= -20) {
-                        airTicks = 0;
-                        EntityDamageEvent ev = new EntityDamageEvent(this, EntityDamageEvent.CAUSE_DROWNING, 2);
-                        this.attack(ev);
-                    }
-
-                    this.setDataProperty(new ShortEntityData(DATA_AIR, airTicks));
-                }
-            } else {
-                if (this instanceof EntityWaterAnimal) {
-                    hasUpdate = true;
-                    int airTicks = this.getDataPropertyInt(DATA_AIR) - tickDiff;
-
-                    if (airTicks <= -20) {
-                        airTicks = 0;
-                        EntityDamageEvent ev = new EntityDamageEvent(this, EntityDamageEvent.CAUSE_SUFFOCATION, 2);
-                        this.attack(ev);
-                    }
-
-                    this.setDataProperty(new ShortEntityData(DATA_AIR, airTicks));
-                } else {
-                    this.setDataProperty(new ShortEntityData(DATA_AIR, 300));
-                }
-            }
-        }
-
         if (this.attackTime > 0) {
             this.attackTime -= tickDiff;
         }

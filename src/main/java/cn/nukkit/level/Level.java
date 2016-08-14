@@ -608,69 +608,11 @@ public class Level implements ChunkManager, Metadatable {
 			this.sendTimeTicker = 0;
 		}
 
-		// Tick Weather
-		this.rainTime--;
-		if (this.rainTime <= 0) {
-			if (!this.setRaining(!this.raining)) {
-				if (this.raining) {
-					setRainTime(rand.nextInt(12000) + 12000);
-				} else {
-					setRainTime(rand.nextInt(168000) + 12000);
-				}
-			}
-		}
-
-		this.thunderTime--;
-		if (this.thunderTime <= 0) {
-			if (!this.setThundering(!this.thundering)) {
-				if (this.thundering) {
-					setThunderTime(rand.nextInt(12000) + 3600);
-				} else {
-					setThunderTime(rand.nextInt(168000) + 12000);
-				}
-			}
-		}
-
-		if (this.isThundering()) {
-			synchronized (this) {
-				for (FullChunk chunk : this.getChunks().values()) {
-					if (rand.nextInt(100000) == 0) {
-						this.updateLCG = this.updateLCG * 3 + 1013904223;
-						int LCG = this.updateLCG >> 2;
-						int x = LCG & 0x0f;
-						int z = LCG >> 8 & 0x0f;
-						int y = chunk.getHighestBlockAt(x, z);
-						int bId = chunk.getBlockId(x, y, z);
-						if (bId != Block.TALL_GRASS && bId != Block.WATER)
-							y += 1;
-						CompoundTag nbt = new CompoundTag()
-								.putList(new ListTag<DoubleTag>("Pos").add(new DoubleTag("", x + 16 * chunk.getX()))
-										.add(new DoubleTag("", y)).add(new DoubleTag("", z + 16 * chunk.getZ())))
-								.putList(new ListTag<DoubleTag>("Motion").add(new DoubleTag("", 0))
-										.add(new DoubleTag("", 0)).add(new DoubleTag("", 0)))
-								.putList(new ListTag<FloatTag>("Rotation").add(new FloatTag("", 0))
-										.add(new FloatTag("", 0)));
-
-						EntityLightning bolt = new EntityLightning(chunk, nbt);
-						LightningStrikeEvent ev = new LightningStrikeEvent(this, bolt);
-						if (!ev.isCancelled()) {
-							bolt.spawnToAll();
-						} else {
-							bolt.setEffect(false);
-						}
-
-					}
-
-				}
-			}
-
-		}
-
 		this.levelCurrentTick++;
 
 		this.unloadChunks();
 
-		while (this.updateQueue.peek() != null && this.updateQueue.peek().priority <= currentTick) {
+		/*while (this.updateQueue.peek() != null && this.updateQueue.peek().priority <= currentTick) {
 			Block block = this.getBlock((Vector3) this.updateQueue.poll().data);
 			this.updateQueueIndex.remove(Level.blockHash((int) block.x, (int) block.y, (int) block.z));
 			block.onUpdate(BLOCK_UPDATE_SCHEDULED);
@@ -689,9 +631,9 @@ public class Level implements ChunkManager, Metadatable {
 					this.updateBlockEntities.remove(id);
 				}
 			}
-		}
+		}*/
 
-		this.tickChunks();
+		//this.tickChunks(); mozna se neco pokazi
 
 		if (!this.changedBlocks.isEmpty()) {
 			if (!this.players.isEmpty()) {
@@ -719,10 +661,6 @@ public class Level implements ChunkManager, Metadatable {
 		}
 
 		this.processChunkRequest();
-
-		if (this.sleepTicks > 0 && --this.sleepTicks <= 0) {
-			this.checkSleep();
-		}
 
 		//List<DataPacket> movementPackets = new ArrayList<>();
 

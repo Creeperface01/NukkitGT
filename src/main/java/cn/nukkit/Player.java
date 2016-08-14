@@ -1126,103 +1126,10 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
 
     @Override
     protected void checkBlockCollision() {
-        for (Block block : this.getCollisionBlocks()) {
-            if (block.hasEntityCollision()) {
-                block.onEntityCollide(this);
-            }
-        }
+
     }
 
     protected void checkNearEntities() {
-        for (Entity entity : this.level.getNearbyEntities(this.boundingBox.grow(1, 0.5, 1), this)) {
-            entity.scheduleUpdate();
-
-            if (!entity.isAlive() || !this.isAlive()) {
-                continue;
-            }
-
-            if (entity instanceof EntityArrow && ((EntityArrow) entity).hadCollision) {
-                ItemArrow item = new ItemArrow();
-                if (this.isSurvival() && !this.inventory.canAddItem(item)) {
-                    continue;
-                }
-
-                InventoryPickupArrowEvent ev;
-                this.server.getPluginManager().callEvent(ev = new InventoryPickupArrowEvent(this.inventory, (EntityArrow) entity));
-                if (ev.isCancelled()) {
-                    continue;
-                }
-
-                TakeItemEntityPacket pk = new TakeItemEntityPacket();
-                pk.entityId = this.getId();
-                pk.target = entity.getId();
-                Server.broadcastPacket(entity.getViewers().values(), pk);
-
-                pk = new TakeItemEntityPacket();
-                pk.entityId = 0;
-                pk.target = entity.getId();
-                this.dataPacket(pk);
-
-                this.inventory.addItem(item.clone());
-                entity.kill();
-            } else if (entity instanceof EntityItem) {
-                if (((EntityItem) entity).getPickupDelay() <= 0) {
-                    Item item = ((EntityItem) entity).getItem();
-
-                    if (item != null) {
-                        if (this.isSurvival() && !this.inventory.canAddItem(item)) {
-                            continue;
-                        }
-
-                        InventoryPickupItemEvent ev;
-                        this.server.getPluginManager().callEvent(ev = new InventoryPickupItemEvent(this.inventory, (EntityItem) entity));
-                        if (ev.isCancelled()) {
-                            continue;
-                        }
-
-                        //todo: achievement
-                        /*switch (item.getId()) {
-                            case Item.WOOD:
-                                this.awardAchievement("mineWood");
-                                break;
-                            case Item.DIAMOND:
-                                this.awardAchievement("diamond");
-                                break;
-                        }*/
-
-                        TakeItemEntityPacket pk = new TakeItemEntityPacket();
-                        pk.entityId = this.getId();
-                        pk.target = entity.getId();
-                        Server.broadcastPacket(entity.getViewers().values(), pk);
-
-                        pk = new TakeItemEntityPacket();
-                        pk.entityId = 0;
-                        pk.target = entity.getId();
-                        this.dataPacket(pk);
-
-                        this.inventory.addItem(item.clone());
-                        entity.kill();
-                    }
-                }
-            }
-        }
-        for (Entity entity : this.level.getNearbyEntities(this.boundingBox.grow(3.5, 2, 3.5), this)) {
-            entity.scheduleUpdate();
-
-            if (!entity.isAlive() || !this.isAlive()) {
-                continue;
-            }
-            if (entity instanceof EntityXPOrb) {
-                EntityXPOrb xpOrb = (EntityXPOrb) entity;
-                if (xpOrb.getPickupDelay() <= 0) {
-                    int exp = xpOrb.getExp();
-                    this.addExperience(exp);
-                    entity.kill();
-                    this.getLevel().addSound(new ExperienceOrbSound(this));
-                    break;
-                }
-            }
-        }
     }
 
     protected void processMovement(int tickDiff) {
@@ -1470,19 +1377,6 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
                     this.inAirTicks = 0;
                     this.highestPosition = this.y;
                 } else {
-                    if (!this.allowFlight && this.inAirTicks > 10 && !this.isSleeping() && !this.getDataPropertyBoolean(DATA_NO_AI)) {
-                        double expectedVelocity = (-this.getGravity()) / ((double) this.getDrag()) - ((-this.getGravity()) / ((double) this.getDrag())) * Math.exp(-((double) this.getDrag()) * ((double) (this.inAirTicks - this.startAirTicks)));
-                        double diff = (this.speed.y - expectedVelocity) * (this.speed.y - expectedVelocity);
-
-                        if (!this.hasEffect(Effect.JUMP) && diff > 0.6 && expectedVelocity < this.speed.y && !this.server.getAllowFlight()) {
-                            if (this.inAirTicks < 100) {
-                                //this.sendSettings();
-                                this.setMotion(new Vector3(0, expectedVelocity, 0));
-                            } else if (this.kick("Flying is not enabled on this server")) {
-                                return false;
-                            }
-                        }
-                    }
 
                     if(inPortalTicks >= 80){
                         EntityPortalEnterEvent ev = new EntityPortalEnterEvent(this, EntityPortalEnterEvent.TYPE_NETHER);
