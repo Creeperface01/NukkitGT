@@ -633,7 +633,7 @@ public class Level implements ChunkManager, Metadatable {
 			}
 		}*/
 
-		//this.tickChunks(); mozna se neco pokazi
+		this.tickChunks();
 
 		if (!this.changedBlocks.isEmpty()) {
 			if (!this.players.isEmpty()) {
@@ -903,12 +903,12 @@ public class Level implements ChunkManager, Metadatable {
                 this.chunkTickList.remove(index);
             }
 
-            for (Entity entity : chunk.getEntities().values()) {
+            /*for (Entity entity : chunk.getEntities().values()) {
                 entity.scheduleUpdate();
-            }
+            }*/
 
             int blockId;
-            if (this.useSections) {
+            /*if (this.useSections) {
                 for (ChunkSection section : ((Chunk) chunk).getSections()) {
                     if (!(section instanceof EmptyChunkSection)) {
                         int Y = section.getY();
@@ -964,7 +964,7 @@ public class Level implements ChunkManager, Metadatable {
                         }
                     }
                 }
-            }
+            }*/
         }
 
         if (this.clearChunksOnTick) {
