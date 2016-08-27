@@ -616,7 +616,7 @@ public class Level implements ChunkManager, Metadatable {
 			Block block = this.getBlock((Vector3) this.updateQueue.poll().data);
 			this.updateQueueIndex.remove(Level.blockHash((int) block.x, (int) block.y, (int) block.z));
 			block.onUpdate(BLOCK_UPDATE_SCHEDULED);
-		}
+		}*/
 
 		for (long id : new ArrayList<>(this.updateEntities.keySet())) {
 			Entity entity = this.updateEntities.get(id);
@@ -625,7 +625,7 @@ public class Level implements ChunkManager, Metadatable {
 			}
 		}
 
-		if (!this.updateBlockEntities.isEmpty()) {
+		/*if (!this.updateBlockEntities.isEmpty()) {
 			for (long id : new ArrayList<>(this.updateBlockEntities.keySet())) {
 				if (!this.updateBlockEntities.get(id).onUpdate()) {
 					this.updateBlockEntities.remove(id);
@@ -1699,7 +1699,7 @@ public class Level implements ChunkManager, Metadatable {
 			Entity[] entities = this.getCollidingEntities(hand.getBoundingBox());
 			int realCount = 0;
 			for (Entity e : entities) {
-				if (e instanceof EntityArrow || e instanceof EntityItem) {
+				if (e instanceof EntityArrow || e instanceof EntityItem || (e instanceof Player && ((Player) e).isSpectator())) {
 					continue;
 				}
 				++realCount;
