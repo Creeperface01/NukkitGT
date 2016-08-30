@@ -159,6 +159,7 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
 
     protected Vector3 newPosition = null;
 
+    protected int chunkRadius;
     protected int viewDistance;
     protected int chunksPerTick;
     protected int spawnThreshold;
@@ -748,12 +749,12 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
         int centerZ = (int) this.z >> 4;
         int count = 0;
 
-        for (int x = -this.viewDistance; x <= this.viewDistance; x++) {
-            for (int z = -this.viewDistance; z <= this.viewDistance; z++) {
+        for (int x = -this.chunkRadius; x <= this.chunkRadius; x++) {
+            for (int z = -this.chunkRadius; z <= this.chunkRadius; z++) {
                 int chunkX = x + centerX;
                 int chunkZ = z + centerZ;
                 int distance = (int) Math.sqrt((double) x * x + (double) z * z);
-                if (distance <= this.viewDistance) {
+                if (distance <= this.chunkRadius) {
                     String index;
                     if (!(this.usedChunks.containsKey(index = Level.chunkHash(chunkX, chunkZ))) || !this.usedChunks.get(index)) {
                         newOrder.put(index, distance);
@@ -2018,7 +2019,7 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
                     Block target = this.level.getBlock(blockVector);
                     Block block = target.getSide(useItemPacket.face);
 
-                    if(target instanceof BlockDoor) {
+                    if (target instanceof BlockDoor) {
                         BlockDoor door = (BlockDoor) target;
 
                         Block part;
@@ -3106,7 +3107,8 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
             case ProtocolInfo.REQUEST_CHUNK_RADIUS_PACKET:
                 RequestChunkRadiusPacket requestChunkRadiusPacket = (RequestChunkRadiusPacket) packet;
                 ChunkRadiusUpdatedPacket chunkRadiusUpdatePacket = new ChunkRadiusUpdatedPacket();
-                chunkRadiusUpdatePacket.radius = Math.max(5, Math.min(requestChunkRadiusPacket.radius, this.viewDistance));
+                this.chunkRadius = Math.max(5, Math.min(requestChunkRadiusPacket.radius, this.viewDistance));
+                chunkRadiusUpdatePacket.radius = this.chunkRadius;
                 this.dataPacket(chunkRadiusUpdatePacket);
                 break;
             default:
