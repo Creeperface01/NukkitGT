@@ -41,7 +41,11 @@ public class LoginPacket extends DataPacket {
         this.protocol = this.getInt();
         byte[] str;
         try {
-            str = Zlib.inflate(this.get(this.getInt()), 1024 * 1024 * 64);
+            if (this.protocol >= 90) {
+                str = Zlib.inflate(this.get(this.getShort()), 1024 * 1024 * 64);
+            } else {
+                str = Zlib.inflate(this.get(this.getInt()), 1024 * 1024 * 64);
+            }
         } catch (Exception e) {
             if (Nukkit.DEBUG > 1) Server.getInstance().getLogger().logException(e);
             return;
