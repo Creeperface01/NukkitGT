@@ -8,6 +8,7 @@ import cn.nukkit.block.BlockFire;
 import cn.nukkit.block.BlockWater;
 import cn.nukkit.entity.data.*;
 import cn.nukkit.event.entity.*;
+import cn.nukkit.event.player.PlayerInteractEvent;
 import cn.nukkit.event.player.PlayerTeleportEvent;
 import cn.nukkit.item.Item;
 import cn.nukkit.level.Level;
