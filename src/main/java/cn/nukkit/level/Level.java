@@ -1702,6 +1702,11 @@ public class Level implements ChunkManager, Metadatable {
 				if (e instanceof EntityArrow || e instanceof EntityItem || (e instanceof Player && ((Player) e).isSpectator())) {
 					continue;
 				}
+
+				if(player != null && e.getId() == player.getId()){
+					System.out.println("blockY: "+hand.boundingBox.maxY + "     Y: "+player.boundingBox.minY);
+				}
+
 				++realCount;
 			}
 
