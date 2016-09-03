@@ -11,6 +11,8 @@ public interface ProtocolInfo {
      */
     byte CURRENT_PROTOCOL = 82;
 
+    byte MINIMAL_PROTOCOL = 81;
+
     byte LOGIN_PACKET = (byte) 0x01;
     byte PLAY_STATUS_PACKET = (byte) 0x02;
     byte SERVER_TO_CLIENT_HANDSHAKE_PACKET = (byte) 0x03;

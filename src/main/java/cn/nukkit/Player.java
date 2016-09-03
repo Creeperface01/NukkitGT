@@ -1059,6 +1059,8 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
         return false;
     }
 
+    private ArrayList<MovePlayerPacket> movePackets = new ArrayList<>();
+
     @Override
     protected void checkGroundState(double movX, double movY, double movZ, double dx, double dy, double dz) {
         if (!this.onGround || movX != 0 || movY != 0 || movZ != 0) {
@@ -1070,7 +1072,7 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
 
             AxisAlignedBB realBB = this.boundingBox.clone();
             realBB.maxY = realBB.minY + 0.1;
-            realBB.minY -= 0.2;
+            realBB.minY -= 0.4;
 
             int minX = NukkitMath.floorDouble(bb.minX);
             int minY = NukkitMath.floorDouble(bb.minY);
@@ -1079,19 +1081,36 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
             int maxY = NukkitMath.ceilDouble(bb.maxY);
             int maxZ = NukkitMath.ceilDouble(bb.maxZ);
 
+            List<Block> blocks = new ArrayList<>();
+
             for (int z = minZ; z <= maxZ; ++z) {
                 for (int x = minX; x <= maxX; ++x) {
                     for (int y = minY; y <= maxY; ++y) {
                         Block block = this.level.getBlock(this.temporalVector.setComponents(x, y, z));
+                        blocks.add(block);
 
                         if (!block.canPassThrough() && block.collidesWithBB(realBB)) {
                             onGround = true;
+
+                            double packetMinY = -1;
+                            double blockY = block.boundingBox.maxY;
+
+                            for(MovePlayerPacket pk : movePackets){
+                                if(packetMinY == -1 || pk.y - getEyeHeight() < packetMinY){
+                                    packetMinY = pk.y - getEyeHeight();
+                                }
+                            }
+
+                            if(this.y - blockY >= 0.3 && packetMinY - blockY >= 0.3) {
+                                onGround = false;
+                            }
                             break;
                         }
                     }
                 }
             }
 
+            this.groundBlocks = blocks;
             this.onGround = onGround;
         }
 
@@ -1414,6 +1433,10 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
         }
 
         if (this.spawned) {
+            if(this.newPosition == null || !this.newPosition.equals(this)) {
+                this.blocksAround= null;
+            }
+
             this.processMovement(tickDiff);
 
             this.entityBaseTick(tickDiff);
@@ -1426,6 +1449,13 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
                         this.extinguish();
                     }
                 }
+            }
+
+            if(this.inPortalTicks > 200){
+                EntityPortalEnterEvent ev = new EntityPortalEnterEvent(this, EntityPortalEnterEvent.TYPE_NETHER);
+                getServer().getPluginManager().callEvent(ev);
+
+                this.inPortalTicks = 0;
             }
 
             if (!this.isSpectator() && this.speed != null) {
@@ -1753,7 +1783,7 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
                     LoginPacket loginPacket = (LoginPacket) packet;
 
                     String message;
-                    if (loginPacket.getProtocol() != ProtocolInfo.CURRENT_PROTOCOL) {
+                    if (loginPacket.getProtocol() < ProtocolInfo.MINIMAL_PROTOCOL || loginPacket.getProtocol() > ProtocolInfo.CURRENT_PROTOCOL) {
                         if (loginPacket.getProtocol() < ProtocolInfo.CURRENT_PROTOCOL) {
                             message = "disconnectionScreen.outdatedClient";
 
@@ -1796,7 +1826,7 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
                         if ((c >= 'a' && c <= 'z') ||
                                 (c >= 'A' && c <= 'Z') ||
                                 (c >= '0' && c <= '9') ||
-                                c == '_' || c == ' '
+                                c == '_'
                                 ) {
                             continue;
                         }
@@ -1851,6 +1881,8 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
                         if (movePlayerPacket.yaw < 0) {
                             movePlayerPacket.yaw += 360;
                         }
+
+                        movePackets.add(movePlayerPacket);
 
                         this.setRotation(movePlayerPacket.yaw, movePlayerPacket.pitch);
                         this.newPosition = newPos;
@@ -3304,38 +3336,7 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
     }
 
     public void save(boolean async) {
-        if (this.closed) {
-            throw new IllegalStateException("Tried to save closed player");
-        }
 
-        super.saveNBT();
-
-        if (this.level != null) {
-            this.namedTag.putString("Level", this.level.getFolderName());
-            if (this.spawnPosition != null && this.spawnPosition.getLevel() != null) {
-                this.namedTag.putString("SpawnLevel", this.spawnPosition.getLevel().getFolderName());
-                this.namedTag.putInt("SpawnX", (int) this.spawnPosition.x);
-                this.namedTag.putInt("SpawnY", (int) this.spawnPosition.y);
-                this.namedTag.putInt("SpawnZ", (int) this.spawnPosition.z);
-            }
-
-            //todo save achievement
-
-            this.namedTag.putInt("playerGameType", this.gamemode);
-            this.namedTag.putLong("lastPlayed", System.currentTimeMillis() / 1000);
-
-            this.namedTag.putString("lastIP", this.getAddress());
-
-            this.namedTag.putInt("EXP", this.getExperience());
-            this.namedTag.putInt("expLevel", this.getExperienceLevel());
-
-            this.namedTag.putInt("foodLevel", this.getFoodData().getLevel());
-            this.namedTag.putFloat("foodSaturationLevel", this.getFoodData().getFoodSaturationLevel());
-
-            if (!"".equals(this.username) && this.namedTag != null) {
-                this.server.saveOfflinePlayerData(this.username, this.namedTag, async);
-            }
-        }
     }
 
     public String getName() {
