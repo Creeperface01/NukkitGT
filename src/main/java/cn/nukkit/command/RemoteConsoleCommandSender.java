@@ -1,13 +1,14 @@
 package cn.nukkit.command;
 
-import cn.nukkit.event.TextContainer;
+import cn.nukkit.lang.TextContainer;
 
 /**
  * Represents an RCON command sender.
+ *
  * @author Tee7even
  */
 public class RemoteConsoleCommandSender extends ConsoleCommandSender {
-    private StringBuilder messages = new StringBuilder();
+    private final StringBuilder messages = new StringBuilder();
 
     @Override
     public void sendMessage(String message) {

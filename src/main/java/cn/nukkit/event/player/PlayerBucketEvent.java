@@ -7,11 +7,11 @@ import cn.nukkit.item.Item;
 
 abstract class PlayerBucketEvent extends PlayerEvent implements Cancellable {
 
-    private Block blockClicked;
+    private final Block blockClicked;
 
-    private Integer blockFace;
+    private final Integer blockFace;
 
-    private Item bucket;
+    private final Item bucket;
 
     private Item item;
 
@@ -46,7 +46,7 @@ abstract class PlayerBucketEvent extends PlayerEvent implements Cancellable {
         return this.blockClicked;
     }
 
-    public int getBlockFace(){
+    public int getBlockFace() {
         return this.blockFace;
     }
 }

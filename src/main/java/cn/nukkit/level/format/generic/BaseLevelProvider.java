@@ -22,7 +22,7 @@ import java.nio.ByteOrder;
 public abstract class BaseLevelProvider implements LevelProvider {
     protected Level level;
 
-    protected String path;
+    protected final String path;
 
     protected CompoundTag levelData;
 
@@ -169,4 +169,9 @@ public abstract class BaseLevelProvider implements LevelProvider {
         }
     }
 
+    public void updateLevelName(String name) {
+        if (!this.getName().equals(name)) {
+            this.levelData.putString("LevelName", name);
+        }
+    }
 }

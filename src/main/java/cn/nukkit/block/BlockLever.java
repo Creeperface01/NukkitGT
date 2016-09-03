@@ -2,6 +2,7 @@ package cn.nukkit.block;
 
 import cn.nukkit.Player;
 import cn.nukkit.item.Item;
+import cn.nukkit.level.Level;
 import cn.nukkit.level.sound.LeverSound;
 import cn.nukkit.redstone.Redstone;
 
@@ -10,14 +11,13 @@ import cn.nukkit.redstone.Redstone;
  */
 public class BlockLever extends BlockFlowable {
 
-    public BlockLever(int meta) {
-        super(meta);
-        this.setPowerSource(true);
-        this.setPowerLevel(Redstone.POWER_STRONGEST);
-    }
-
     public BlockLever() {
         this(0);
+    }
+
+    public BlockLever(int meta) {
+        super(meta);
+        this.setPowerLevel(Redstone.POWER_STRONGEST);
     }
 
     @Override
@@ -37,38 +37,63 @@ public class BlockLever extends BlockFlowable {
 
     @Override
     public double getHardness() {
-        return 0.5D;
+        return 0.5d;
     }
 
     @Override
     public double getResistance() {
-        return 2.5D;
+        return 2.5d;
     }
 
     @Override
     public int[][] getDrops(Item item) {
-        return new int[][]{
+        return new int[][] {
                 {Item.LEVER, 0, 1}
         };
     }
 
     public boolean isPowerOn() {
-        return this.meta >= 8;
+        return (this.meta & 0x08) > 0;
     }
 
     @Override
     public boolean onActivate(Item item, Player player) {
         this.meta ^= 0x08;
 
-        this.getLevel().setBlock(this, this, true, false);
+        this.getLevel().setBlock(this, this, true, true);
         this.getLevel().addSound(new LeverSound(this, this.isPowerOn()));
         if (this.isPowerOn()) {
             this.setPowerSource(true);
             Redstone.active(this);
         } else {
+            this.setPowerSource(false);
             Redstone.deactive(this, this.getPowerLevel());
         }
         return true;
+    }
+
+    @Override
+    public int onUpdate(int type) {
+        if (type == Level.BLOCK_UPDATE_NORMAL) {
+            int[] faces = new int[]{
+                    1,
+                    4,
+                    5,
+                    2,
+                    3,
+                    0,
+                    0,
+                    1
+            };
+            int face = this.isPowerOn() ? this.meta ^ 0x08 : this.meta;
+            if (this.getSide(faces[face]).isTransparent()) {
+                this.onBreak(null);
+                for (int[] item : this.getDrops(null)) {
+                    this.getLevel().dropItem(this, Item.get(item[0], item[1], item[2]));
+                }
+            }
+        }
+        return 0;
     }
 
     @Override
@@ -80,20 +105,19 @@ public class BlockLever extends BlockFlowable {
                     4,
                     3,
                     2,
-                    1,
+                    1
             };
             int to;
 
             if (face == 0) {
                 to = player != null ? player.getDirection() : 0;
-                this.meta = (to);
+                this.meta = (to % 2 == 0 ? 0 : 7);
             } else if (face == 1) {
                 to = player != null ? player.getDirection() : 0;
-                this.meta = (to ^ 6);
+                this.meta = (to % 2 == 0 ? 6 : 5);
             } else {
                 this.meta = faces[face];
             }
-
             this.getLevel().setBlock(block, this, true, true);
             return true;
         }
@@ -102,9 +126,8 @@ public class BlockLever extends BlockFlowable {
 
     @Override
     public boolean onBreak(Item item) {
-        super.onBreak(item);
-        int level = this.getPowerLevel();
-        Redstone.deactive(this, level);
+        this.getLevel().setBlock(this, new BlockAir(), true, true);
+        Redstone.deactive(this, this.getPowerLevel());
         return true;
     }
 

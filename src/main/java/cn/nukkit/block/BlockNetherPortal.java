@@ -73,6 +73,17 @@ public class BlockNetherPortal extends BlockFlowable {
     @Override
     public void onEntityCollide(Entity entity) {
         entity.inPortalTicks++;
+
+        if (entity.inPortalTicks >= 80) {
+            EntityPortalEnterEvent ev = new EntityPortalEnterEvent(entity, EntityPortalEnterEvent.TYPE_NETHER);
+            this.level.getServer().getPluginManager().callEvent(ev);
+
+            if (ev.isCancelled()) {
+                return;
+            }
+
+            //todo: teleport to the nether
+        }
     }
 
 

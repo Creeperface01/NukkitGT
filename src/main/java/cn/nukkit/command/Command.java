@@ -1,9 +1,11 @@
 package cn.nukkit.command;
 
 import cn.nukkit.Server;
-import cn.nukkit.event.TextContainer;
-import cn.nukkit.event.TranslationContainer;
+import cn.nukkit.lang.TextContainer;
+import cn.nukkit.lang.TranslationContainer;
 import cn.nukkit.permission.Permissible;
+import cn.nukkit.timings.Timing;
+import cn.nukkit.timings.Timings;
 import cn.nukkit.utils.TextFormat;
 
 import java.util.Set;
@@ -14,7 +16,7 @@ import java.util.Set;
  */
 public abstract class Command {
 
-    private String name;
+    private final String name;
 
     private String nextLabel;
 
@@ -33,6 +35,8 @@ public abstract class Command {
     private String permission = null;
 
     private String permissionMessage = null;
+
+    public Timing timing;
 
     public Command(String name) {
         this(name, "", null, new String[0]);
@@ -54,6 +58,7 @@ public abstract class Command {
         this.usageMessage = usageMessage == null ? "/" + name : usageMessage;
         this.aliases = aliases;
         this.activeAliases = aliases;
+        this.timing = Timings.getCommandTiming(this);
     }
 
     public abstract boolean execute(CommandSender sender, String commandLabel, String[] args);
@@ -107,6 +112,7 @@ public abstract class Command {
         this.nextLabel = name;
         if (!this.isRegistered()) {
             this.label = name;
+            this.timing = Timings.getCommandTiming(this);
             return true;
         }
         return false;
@@ -182,7 +188,7 @@ public abstract class Command {
 
         TranslationContainer result = new TranslationContainer("chat.type.admin", new String[]{source.getName(), message});
 
-        TranslationContainer colored = new TranslationContainer(TextFormat.GRAY + TextFormat.ITALIC + "%chat.type.admin", new String[]{source.getName(), message});
+        TranslationContainer colored = new TranslationContainer(TextFormat.GRAY + "" + TextFormat.ITALIC + "%chat.type.admin", new String[]{source.getName(), message});
 
         if (sendToSource && !(source instanceof ConsoleCommandSender)) {
             source.sendMessage(message);
@@ -209,7 +215,7 @@ public abstract class Command {
 
         Set<Permissible> users = source.getServer().getPluginManager().getPermissionSubscriptions(Server.BROADCAST_CHANNEL_ADMINISTRATIVE);
 
-        String coloredStr = TextFormat.GRAY + TextFormat.ITALIC + resultStr;
+        String coloredStr = TextFormat.GRAY + "" + TextFormat.ITALIC + resultStr;
 
         m.setText(resultStr);
         TextContainer result = m.clone();
