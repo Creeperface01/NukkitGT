@@ -43,6 +43,7 @@ import cn.nukkit.level.Location;
 import cn.nukkit.level.Position;
 import cn.nukkit.level.format.Chunk;
 import cn.nukkit.level.format.FullChunk;
+import cn.nukkit.level.format.anvil.Anvil;
 import cn.nukkit.level.format.generic.BaseFullChunk;
 import cn.nukkit.level.particle.CriticalParticle;
 import cn.nukkit.level.sound.ExperienceOrbSound;
@@ -121,7 +122,7 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
 
     protected SimpleTransactionGroup currentTransaction = null;
 
-    public int craftingType = 0; //0 = 2x2 crafting, 1 = 3x3 crafting, 2 = stonecutter
+    public int craftingType = 0; //0 = 2x2 crafting, 1 = 3x3 crafting, 2 = stonecutter, 3 = anvil
 
     protected boolean isCrafting = false;
 
@@ -2741,7 +2742,49 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
 
                 case ProtocolInfo.CRAFTING_EVENT_PACKET:
                     CraftingEventPacket craftingEventPacket = (CraftingEventPacket) packet;
+
+                    //System.out.println("Craftingevent windowID: "+craftingEventPacket.windowId+"   type: "+craftingEventPacket.type+"     input: "+Arrays.toString(craftingEventPacket.input)+"    output: "+Arrays.toString(craftingEventPacket.output));
+                    //System.out.println("name: "+craftingEventPacket.output[0].getCustomName());
+                    //System.out.println("crafting type: "+craftingType);
+
                     if (!this.spawned || !this.isAlive()) {
+                        break;
+                    }
+
+                    Recipe recipe = this.server.getCraftingManager().getRecipe(craftingEventPacket.id);
+
+                    if(this.craftingType == 3) {
+                        Inventory inv = this.windowIndex.get(craftingEventPacket.windowId);
+                        AnvilInventory anvilInventory = inv instanceof AnvilInventory ? (AnvilInventory) inv : null;
+
+                        if(anvilInventory == null) {
+                            anvilInventory = null;
+
+                            for(Inventory window : this.windowIndex.values()){
+                                if(window instanceof AnvilInventory){
+                                    anvilInventory = (AnvilInventory) window;
+                                    break;
+                                }
+                            }
+
+                            if(anvilInventory == null){ //If it'sf _still_ null, then the player doesn't have a valid anvil window, cannot proceed.
+                                this.getServer().getLogger().debug("Couldn't find an anvil window for "+this.getName()+", exiting");
+                                this.inventory.sendContents(this);
+                                break;
+                            }
+                        }
+
+                        if(recipe == null){
+                            //Item renamed
+
+                            craftingEventPacket.output[0].getNamedTag().print(System.out);
+                            if(!anvilInventory.onRename(this, craftingEventPacket.output[0])){
+                                this.getServer().getLogger().debug(this.getName()+" failed to rename an item in an anvil");
+                                this.inventory.sendContents(this);
+                            }
+                        } else {
+                            //TODO: Anvil crafting recipes
+                        }
                         break;
                     } else if (!this.windowIndex.containsKey(craftingEventPacket.windowId)) {
                         this.inventory.sendContents(this);
@@ -2750,8 +2793,6 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
                         this.dataPacket(containerClosePacket);
                         break;
                     }
-
-                    Recipe recipe = this.server.getCraftingManager().getRecipe(craftingEventPacket.id);
 
                     if ((recipe == null) || (((recipe instanceof BigShapelessRecipe) || (recipe instanceof BigShapedRecipe)) && this.craftingType == 0)) {
                         this.inventory.sendContents(this);
@@ -3006,6 +3047,11 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
                         if (inv instanceof EnchantInventory && containerSetSlotPacket.item.hasEnchantments()) {
                             ((EnchantInventory) inv).onEnchant(this, inv.getItem(containerSetSlotPacket.slot), containerSetSlotPacket.item);
                         }
+
+                        if(inv instanceof AnvilInventory){
+                            this.craftingType = 3;
+                        }
+                        //System.out.println("container set slot "+containerSetSlotPacket.item.getCustomName());
 
                         transaction = new BaseTransaction(inv, containerSetSlotPacket.slot, inv.getItem(containerSetSlotPacket.slot), containerSetSlotPacket.item);
                     } else {
