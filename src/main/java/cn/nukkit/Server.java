@@ -14,8 +14,6 @@ import cn.nukkit.entity.projectile.EntityArrow;
 import cn.nukkit.entity.projectile.EntitySnowball;
 import cn.nukkit.entity.weather.EntityLightning;
 import cn.nukkit.event.HandlerList;
-import cn.nukkit.event.TextContainer;
-import cn.nukkit.event.TranslationContainer;
 import cn.nukkit.event.level.LevelInitEvent;
 import cn.nukkit.event.level.LevelLoadEvent;
 import cn.nukkit.event.server.QueryRegenerateEvent;
@@ -23,6 +21,8 @@ import cn.nukkit.inventory.*;
 import cn.nukkit.item.Item;
 import cn.nukkit.item.enchantment.Enchantment;
 import cn.nukkit.lang.BaseLang;
+import cn.nukkit.lang.TextContainer;
+import cn.nukkit.lang.TranslationContainer;
 import cn.nukkit.level.Level;
 import cn.nukkit.level.Position;
 import cn.nukkit.level.format.LevelProvider;
@@ -65,6 +65,7 @@ import cn.nukkit.potion.Effect;
 import cn.nukkit.potion.Potion;
 import cn.nukkit.scheduler.FileWriteTask;
 import cn.nukkit.scheduler.ServerScheduler;
+import cn.nukkit.timings.Timings;
 import cn.nukkit.utils.*;
 
 import java.io.*;
@@ -72,8 +73,8 @@ import java.nio.ByteOrder;
 import java.util.*;
 
 /**
- * author: MagicDroidX & Box
- * Nukkit
+ * @author MagicDroidX
+ * @author Box
  */
 public class Server {
 
@@ -104,9 +105,9 @@ public class Server {
 
     private long nextTick;
 
-    private float[] tickAverage = {20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20};
+    private final float[] tickAverage = {20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20};
 
-    private float[] useAverage = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    private final float[] useAverage = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
     private float maxTick = 20;
 
@@ -116,9 +117,9 @@ public class Server {
 
     private boolean dispatchSignals = false;
 
-    private MainLogger logger;
+    private final MainLogger logger;
 
-    private CommandReader console;
+    private final CommandReader console;
 
     private SimpleCommandMap commandMap;
 
@@ -157,11 +158,11 @@ public class Server {
 
     private UUID serverID;
 
-    private String filePath;
-    private String dataPath;
-    private String pluginPath;
+    private final String filePath;
+    private final String dataPath;
+    private final String pluginPath;
 
-    private Set<UUID> uniquePlayers = new HashSet<>();
+    private final Set<UUID> uniquePlayers = new HashSet<>();
 
     private QueryHandler queryHandler;
 
@@ -170,13 +171,13 @@ public class Server {
     private Config properties;
     private Config config;
 
-    private Map<String, Player> players = new HashMap<>();
+    private final Map<String, Player> players = new HashMap<>();
 
-    private Map<UUID, Player> playerList = new HashMap<>();
+    private final Map<UUID, Player> playerList = new HashMap<>();
 
-    private Map<Integer, String> identifier = new HashMap<>();
+    private final Map<Integer, String> identifier = new HashMap<>();
 
-    private Map<Integer, Level> levels = new HashMap<>();
+    private final Map<Integer, Level> levels = new HashMap<>();
 
     private Level defaultLevel = null;
 
@@ -349,6 +350,7 @@ public class Server {
         this.logger.info(this.getLanguage().translateString("nukkit.server.info", new String[]{this.getName(), TextFormat.YELLOW + this.getNukkitVersion() + TextFormat.WHITE, TextFormat.AQUA + this.getCodename() + TextFormat.WHITE, this.getApiVersion()}));
         this.logger.info(this.getLanguage().translateString("nukkit.server.license", this.getName()));
 
+
         this.consoleSender = new ConsoleCommandSender();
         this.commandMap = new SimpleCommandMap(this);
 
@@ -445,9 +447,11 @@ public class Server {
             return;
         }
 
-        this.enablePlugins(PluginLoadOrder.POSTWORLD);
+        if ((int) this.getConfig("ticks-per.autosave", 6000) > 0) {
+            this.autoSaveTicks = (int) this.getConfig("ticks-per.autosave", 6000);
+        }
 
-        this.queryRegenerateEvent = new QueryRegenerateEvent(this, 5);
+        this.enablePlugins(PluginLoadOrder.POSTWORLD);
 
         this.start();
     }
@@ -551,6 +555,7 @@ public class Server {
             return;
         }
 
+        Timings.playerNetworkSendTimer.startTiming();
         byte[][] payload = new byte[packets.length * 2][];
         for (int i = 0; i < packets.length; i++) {
             DataPacket p = packets[i];
@@ -580,6 +585,7 @@ public class Server {
                 throw new RuntimeException(e);
             }
         }
+        Timings.playerNetworkSendTimer.stopTiming();
     }
 
     public void broadcastPacketsCallback(byte[] data, List<String> identifiers) {
@@ -669,6 +675,7 @@ public class Server {
         this.pluginManager.loadPlugins(this.pluginPath);
         this.enablePlugins(PluginLoadOrder.STARTUP);
         this.enablePlugins(PluginLoadOrder.POSTWORLD);
+        Timings.reset();
     }
 
     public void shutdown() {
@@ -728,6 +735,8 @@ public class Server {
                 this.network.unregisterInterface(interfaz);
             }
 
+            this.getLogger().debug("Disabling timings");
+            Timings.stopServer();
             //todo other things
         } catch (Exception e) {
             this.logger.logException(e); //todo remove this?
@@ -943,6 +952,7 @@ public class Server {
 
     public void doAutoSave() {
         if (this.getAutoSave()) {
+            Timings.levelSaveTimer.startTiming();
             for (Player player : new ArrayList<>(this.players.values())) {
                 if (player.isOnline()) {
                     player.save(true);
@@ -954,6 +964,7 @@ public class Server {
             for (Level level : this.getLevels().values()) {
                 level.save();
             }
+            Timings.levelSaveTimer.stopTiming();
         }
     }
 
@@ -964,15 +975,21 @@ public class Server {
             return false;
         }
 
+        Timings.fullServerTickTimer.startTiming();
+
         ++this.tickCounter;
 
+        Timings.connectionTimer.startTiming();
         this.network.processInterfaces();
 
         if (this.rcon != null) {
             this.rcon.check();
         }
+        Timings.connectionTimer.stopTiming();
 
+        Timings.schedulerTimer.startTiming();
         this.scheduler.mainThreadHeartbeat(this.tickCounter);
+        Timings.schedulerTimer.stopTiming();
 
         this.checkTickUpdates(this.tickCounter, tickTime);
 
@@ -1019,6 +1036,8 @@ public class Server {
             }
         }
 
+
+        Timings.fullServerTickTimer.stopTiming();
         //long now = System.currentTimeMillis();
         long nowNano = System.nanoTime();
         //float tick = Math.min(20, 1000 / Math.max(1, now - tickTime));
@@ -1642,6 +1661,11 @@ public class Server {
         return network;
     }
 
+    //Revising later...
+    public Config getConfig() {
+        return this.config;
+    }
+
     public Object getConfig(String variable) {
         return this.getConfig(variable, null);
     }
@@ -1649,6 +1673,10 @@ public class Server {
     public Object getConfig(String variable, Object defaultValue) {
         Object value = this.config.get(variable);
         return value == null ? defaultValue : value;
+    }
+
+    public Config getProperties() {
+        return this.properties;
     }
 
     public Object getProperty(String variable) {
@@ -1838,6 +1866,7 @@ public class Server {
         BlockEntity.registerBlockEntity(BlockEntity.SKULL, BlockEntitySkull.class);
         BlockEntity.registerBlockEntity(BlockEntity.FLOWER_POT, BlockEntityFlowerPot.class);
         BlockEntity.registerBlockEntity(BlockEntity.BREWING_STAND, BlockEntityBrewingStand.class);
+        BlockEntity.registerBlockEntity(BlockEntity.ITEM_FRAME, BlockEntityItemFrame.class);
     }
 
     public static Server getInstance() {

@@ -1,8 +1,6 @@
 package cn.nukkit.lang;
 
 import cn.nukkit.Server;
-import cn.nukkit.event.TextContainer;
-import cn.nukkit.event.TranslationContainer;
 import cn.nukkit.utils.Utils;
 
 import java.io.IOException;
@@ -17,7 +15,7 @@ import java.util.Map;
 public class BaseLang {
     public static final String FALLBACK_LANGUAGE = "eng";
 
-    protected String langName;
+    protected final String langName;
 
     protected Map<String, String> lang = new HashMap<>();
     protected Map<String, String> fallbackLang = new HashMap<>();
@@ -120,11 +118,7 @@ public class BaseLang {
         return this.translateString(str, new String[]{}, null);
     }
 
-    public String translateString(String str, String param) {
-        return this.translateString(str, new String[]{param});
-    }
-
-    public String translateString(String str, String[] params) {
+    public String translateString(String str, String... params) {
         return this.translateString(str, params, null);
     }
 
@@ -136,7 +130,7 @@ public class BaseLang {
         String baseText = this.get(str);
         baseText = this.parseTranslation((baseText != null && (onlyPrefix == null || str.indexOf(onlyPrefix) == 0)) ? baseText : str, onlyPrefix);
         for (int i = 0; i < params.length; i++) {
-            baseText = baseText.replace("{%" + i + "}", this.parseTranslation(params[i]));
+            baseText = baseText.replace("{%" + i + "}", this.parseTranslation(String.valueOf(params[i])));
         }
 
         return baseText;
@@ -178,6 +172,7 @@ public class BaseLang {
 
     protected String parseTranslation(String text, String onlyPrefix) {
         String newString = "";
+        text = String.valueOf(text);
 
         String replaceString = null;
 

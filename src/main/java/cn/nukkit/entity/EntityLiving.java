@@ -12,8 +12,10 @@ import cn.nukkit.nbt.tag.CompoundTag;
 import cn.nukkit.nbt.tag.ShortTag;
 import cn.nukkit.network.protocol.EntityEventPacket;
 import cn.nukkit.potion.Effect;
+import cn.nukkit.timings.Timings;
 import cn.nukkit.utils.BlockIterator;
 
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -179,6 +181,7 @@ public abstract class EntityLiving extends Entity implements EntityDamageable {
 
     @Override
     public boolean entityBaseTick(int tickDiff) {
+        Timings.livingEntityBaseTickTimer.startTiming();
         boolean hasUpdate = super.entityBaseTick(tickDiff);
 
         if (this.isAlive()) {
@@ -224,6 +227,7 @@ public abstract class EntityLiving extends Entity implements EntityDamageable {
         if (this.attackTime > 0) {
             this.attackTime -= tickDiff;
         }
+        Timings.livingEntityBaseTickTimer.stopTiming();
 
         return hasUpdate;
     }
@@ -237,15 +241,20 @@ public abstract class EntityLiving extends Entity implements EntityDamageable {
     }
 
     public Block[] getLineOfSight(int maxDistance, int maxLength) {
-        return this.getLineOfSight(maxDistance, maxLength, new HashMap<>());
+        return this.getLineOfSight(maxDistance, maxLength, new Integer[]{});
     }
 
+    @Deprecated
     public Block[] getLineOfSight(int maxDistance, int maxLength, Map<Integer, Object> transparent) {
+        return this.getLineOfSight(maxDistance, maxLength, transparent.keySet().stream().toArray(Integer[]::new));
+    }
+
+    public Block[] getLineOfSight(int maxDistance, int maxLength, Integer[] transparent) {
         if (maxDistance > 120) {
             maxDistance = 120;
         }
 
-        if (transparent != null && transparent.isEmpty()) {
+        if (transparent != null && transparent.length == 0) {
             transparent = null;
         }
 
@@ -268,7 +277,7 @@ public abstract class EntityLiving extends Entity implements EntityDamageable {
                     break;
                 }
             } else {
-                if (!transparent.containsKey(id)) {
+                if (Arrays.binarySearch(transparent, id) < 0) {
                     break;
                 }
             }
@@ -278,17 +287,28 @@ public abstract class EntityLiving extends Entity implements EntityDamageable {
     }
 
     public Block getTargetBlock(int maxDistance) {
-        return getTargetBlock(maxDistance, new HashMap<Integer, Object>());
+        return getTargetBlock(maxDistance, new Integer[]{});
     }
 
+    @Deprecated
     public Block getTargetBlock(int maxDistance, Map<Integer, Object> transparent) {
+        return getTargetBlock(maxDistance, transparent.keySet().stream().toArray(Integer[]::new));
+    }
+
+    public Block getTargetBlock(int maxDistance, Integer[] transparent) {
         try {
             Block[] blocks = this.getLineOfSight(maxDistance, 1, transparent);
             Block block = blocks[0];
-            if (block instanceof Block) {
-                return block;
+            if (block != null) {
+                if (transparent != null && transparent.length != 0) {
+                    if (Arrays.binarySearch(transparent, block.getId()) < 0) {
+                        return block;
+                    }
+                } else {
+                    return block;
+                }
             }
-        } catch (Exception e) {
+        } catch (Exception ignored) {
 
         }
 

@@ -12,8 +12,7 @@ import cn.nukkit.nbt.tag.CompoundTag;
 import cn.nukkit.network.protocol.AddItemEntityPacket;
 
 /**
- * author: MagicDroidX
- * Nukkit Project
+ * @author MagicDroidX
  */
 public class EntityItem extends Entity {
     public static final int NETWORK_ID = 64;
@@ -124,6 +123,9 @@ public class EntityItem extends Entity {
 
         this.lastUpdate = currentTick;
 
+        this.timing.startTiming();
+
+
         boolean hasUpdate = this.entityBaseTick(tickDiff);
 
         if (this.isAlive()) {
@@ -171,21 +173,15 @@ public class EntityItem extends Entity {
             }
         }
 
+        this.timing.stopTiming();
+
         return hasUpdate || !this.onGround || Math.abs(this.motionX) > 0.00001 || Math.abs(this.motionY) > 0.00001 || Math.abs(this.motionZ) > 0.00001;
     }
 
     @Override
     public void saveNBT() {
-    	if(this.item == null){
-    		return;
-    	}
         super.saveNBT();
-        this.namedTag.putCompound("Item", new CompoundTag()
-                .putShort("id", this.item.getId())
-                .putShort("Damage", this.item.getDamage())
-                .putByte("Count", this.item.getCount())
-        );
-
+        this.namedTag.putCompound("Item", NBTIO.putItemHelper(this.item));
         this.namedTag.putShort("Health", this.getHealth());
         this.namedTag.putShort("Age", this.age);
         this.namedTag.putShort("PickupDelay", this.pickupDelay);

@@ -6,9 +6,10 @@ import cn.nukkit.raknet.protocol.Packet;
 import cn.nukkit.raknet.protocol.packet.*;
 import cn.nukkit.utils.Binary;
 import cn.nukkit.utils.ThreadedLogger;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.socket.DatagramPacket;
 
 import java.io.IOException;
-import java.net.DatagramPacket;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -20,14 +21,14 @@ import java.util.*;
 public class SessionManager {
     protected final Packet.PacketFactory[] packetPool = new Packet.PacketFactory[256];
 
-    protected RakNetServer server;
+    protected final RakNetServer server;
 
-    protected UDPServerSocket socket;
+    protected final UDPServerSocket socket;
 
     protected int receiveBytes = 0;
     protected int sendBytes = 0;
 
-    protected Map<String, Session> sessions = new HashMap<>();
+    protected final Map<String, Session> sessions = new HashMap<>();
 
     protected String name = "";
 
@@ -38,12 +39,12 @@ public class SessionManager {
     protected long ticks = 0;
     protected long lastMeasure;
 
-    protected Map<String, Long> block = new HashMap<>();
-    protected Map<String, Integer> ipSec = new HashMap<>();
+    protected final Map<String, Long> block = new HashMap<>();
+    protected final Map<String, Integer> ipSec = new HashMap<>();
 
     public boolean portChecking = true;
 
-    public long serverId;
+    public final long serverId;
 
     protected String currentSource = "";
 
@@ -81,7 +82,7 @@ public class SessionManager {
                     }
                     --max;
                 } catch (Exception e) {
-                    if (currentSource != "") {
+                    if (!"".equals(currentSource)) {
                         this.blockAddress(currentSource);
                     }
                     // else ignore
@@ -142,11 +143,14 @@ public class SessionManager {
     private boolean receivePacket() throws Exception {
         DatagramPacket datagramPacket = this.socket.readPacket();
         if (datagramPacket != null) {
-            int len = datagramPacket.getLength();
-            byte[] buffer = datagramPacket.getData();
-            String source = datagramPacket.getAddress().getHostAddress();
+            ByteBuf byteBuf = datagramPacket.content();
+            byte[] buffer = new byte[byteBuf.readableBytes()];
+            byteBuf.readBytes(buffer);
+            byteBuf.release();
+            int len = buffer.length;
+            String source = datagramPacket.sender().getHostString();
             currentSource = source; //in order to block address
-            int port = datagramPacket.getPort();
+            int port = datagramPacket.sender().getPort();
             if (len > 0) {
                 this.receiveBytes += len;
                 if (this.block.containsKey(source)) {
