@@ -99,6 +99,13 @@ public abstract class EntityLiving extends Entity implements EntityDamageable {
     public void attack(EntityDamageEvent source) {
         if (this.attackTime > 0 || this.noDamageTicks > 0) {
             EntityDamageEvent lastCause = this.getLastDamageCause();
+
+            if(lastCause == null){
+                System.out.println("null cause");
+            } else {
+                System.out.println("cause: "+lastCause.getCause()+"     damage: "+lastCause.getDamage()+"    currentDamage: "+source.getDamage());
+            }
+
             if (lastCause != null && lastCause.getDamage() >= source.getDamage()) {
                 source.setCancelled();
             }
