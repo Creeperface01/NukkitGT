@@ -2,6 +2,7 @@ package cn.nukkit.permission;
 
 import cn.nukkit.Server;
 import cn.nukkit.plugin.Plugin;
+import cn.nukkit.timings.Timings;
 import cn.nukkit.utils.PluginException;
 import cn.nukkit.utils.ServerException;
 
@@ -20,9 +21,9 @@ public class PermissibleBase implements Permissible {
 
     private Permissible parent = null;
 
-    private Set<PermissionAttachment> attachments = new HashSet<>();
+    private final Set<PermissionAttachment> attachments = new HashSet<>();
 
-    private Map<String, PermissionAttachmentInfo> permissions = new HashMap<>();
+    private final Map<String, PermissionAttachmentInfo> permissions = new HashMap<>();
 
     public PermissibleBase(ServerOperator opable) {
         this.opable = opable;
@@ -123,6 +124,7 @@ public class PermissibleBase implements Permissible {
 
     @Override
     public void recalculatePermissions() {
+        Timings.permissibleCalculationTimer.startTiming();
 
         this.clearPermissions();
         Map<String, Permission> defaults = Server.getInstance().getPluginManager().getDefaultPermissions(this.isOp());
@@ -138,6 +140,7 @@ public class PermissibleBase implements Permissible {
         for (PermissionAttachment attachment : this.attachments) {
             this.calculateChildPermissions(attachment.getPermissions(), false, attachment);
         }
+        Timings.permissibleCalculationTimer.stopTiming();
     }
 
     public void clearPermissions() {

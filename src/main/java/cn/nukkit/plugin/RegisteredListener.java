@@ -4,6 +4,8 @@ import cn.nukkit.event.Cancellable;
 import cn.nukkit.event.Event;
 import cn.nukkit.event.EventPriority;
 import cn.nukkit.event.Listener;
+import cn.nukkit.timings.Timing;
+import cn.nukkit.utils.EventException;
 
 /**
  * author: MagicDroidX
@@ -11,22 +13,25 @@ import cn.nukkit.event.Listener;
  */
 public class RegisteredListener {
 
-    private Listener listener;
+    private final Listener listener;
 
-    private EventPriority priority;
+    private final EventPriority priority;
 
-    private Plugin plugin;
+    private final Plugin plugin;
 
-    private EventExecutor executor;
+    private final EventExecutor executor;
 
-    private boolean ignoreCancelled;
+    private final boolean ignoreCancelled;
 
-    public RegisteredListener(Listener listener, EventExecutor executor, EventPriority priority, Plugin plugin, boolean ignoreCancelled) {
+    private final Timing timing;
+
+    public RegisteredListener(Listener listener, EventExecutor executor, EventPriority priority, Plugin plugin, boolean ignoreCancelled, Timing timing) {
         this.listener = listener;
         this.priority = priority;
         this.plugin = plugin;
         this.executor = executor;
         this.ignoreCancelled = ignoreCancelled;
+        this.timing = timing;
     }
 
     public Listener getListener() {
@@ -41,13 +46,15 @@ public class RegisteredListener {
         return priority;
     }
 
-    public void callEvent(Event event) {
+    public void callEvent(Event event) throws EventException {
         if (event instanceof Cancellable) {
             if (event.isCancelled() && isIgnoringCancelled()) {
                 return;
             }
         }
+        this.timing.startTiming();
         executor.execute(listener, event);
+        this.timing.stopTiming();
     }
 
     public boolean isIgnoringCancelled() {

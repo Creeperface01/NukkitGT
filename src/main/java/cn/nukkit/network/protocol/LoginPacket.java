@@ -1,7 +1,5 @@
 package cn.nukkit.network.protocol;
 
-import cn.nukkit.Nukkit;
-import cn.nukkit.Server;
 import cn.nukkit.entity.data.Skin;
 import cn.nukkit.utils.Zlib;
 import com.google.gson.Gson;
@@ -43,7 +41,6 @@ public class LoginPacket extends DataPacket {
         try {
             str = Zlib.inflate(this.get(this.getInt()), 64*1024*1024);
         } catch (Exception e) {
-            if (Nukkit.DEBUG > 1) Server.getInstance().getLogger().logException(e);
             return;
         }
         this.setBuffer(str, 0);

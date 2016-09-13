@@ -2,11 +2,16 @@ package cn.nukkit.command;
 
 import cn.nukkit.Server;
 import cn.nukkit.command.defaults.*;
-import cn.nukkit.event.TranslationContainer;
+import cn.nukkit.command.simple.Arguments;
+import cn.nukkit.command.simple.CommandPermission;
+import cn.nukkit.command.simple.ForbidConsole;
+import cn.nukkit.command.simple.SimpleCommand;
+import cn.nukkit.lang.TranslationContainer;
 import cn.nukkit.utils.MainLogger;
 import cn.nukkit.utils.TextFormat;
 import cn.nukkit.utils.Utils;
 
+import java.lang.reflect.Method;
 import java.util.*;
 
 /**
@@ -14,9 +19,9 @@ import java.util.*;
  * Nukkit Project
  */
 public class SimpleCommandMap implements CommandMap {
-    protected Map<String, Command> knownCommands = new HashMap<>();
+    protected final Map<String, Command> knownCommands = new HashMap<>();
 
-    private Server server;
+    private final Server server;
 
     public SimpleCommandMap(Server server) {
         this.server = server;
@@ -57,7 +62,7 @@ public class SimpleCommandMap implements CommandMap {
         this.register("nukkit", new SetWorldSpawnCommand("setworldspawn"));
         this.register("nukkit", new TeleportCommand("tp"));
         this.register("nukkit", new TimeCommand("time"));
-        //this.register("nukkit", new TimingsCommand("timings"));
+        this.register("nukkit", new TimingsCommand("timings"));
         this.register("nukkit", new ReloadCommand("reload"));
         this.register("nukkit", new WeatherCommand("weather"));
         this.register("nukkit", new XpCommand("xp"));
@@ -110,6 +115,33 @@ public class SimpleCommandMap implements CommandMap {
         return registered;
     }
 
+    @Override
+    public void registerSimpleCommands(Object object) {
+        for (Method method : object.getClass().getDeclaredMethods()) {
+            cn.nukkit.command.simple.Command def = method.getAnnotation(cn.nukkit.command.simple.Command.class);
+            if (def != null) {
+                SimpleCommand sc = new SimpleCommand(object, method, def.name(), def.description(), def.usageMessage(), def.aliases());
+
+                Arguments args = method.getAnnotation(Arguments.class);
+                if (args != null) {
+                    sc.setMaxArgs(args.max());
+                    sc.setMinArgs(args.min());
+                }
+
+                CommandPermission perm = method.getAnnotation(CommandPermission.class);
+                if (perm != null) {
+                    sc.setPermission(perm.value());
+                }
+
+                if (method.isAnnotationPresent(ForbidConsole.class)) {
+                    sc.setForbidConsole(true);
+                }
+
+                this.register(def.name(), sc);
+            }
+        }
+    }
+
     private boolean registerAlias(Command command, boolean isAlias, String fallbackPrefix, String label) {
         this.knownCommands.put(fallbackPrefix + ":" + label, command);
 
@@ -141,34 +173,65 @@ public class SimpleCommandMap implements CommandMap {
         return true;
     }
 
+    private ArrayList<String> parseArguments(String cmdLine) {
+        StringBuilder sb = new StringBuilder(cmdLine);
+        ArrayList<String> args = new ArrayList<>();
+        boolean notQuoted = true;
+        int start = 0;
+
+        for (int i = 0; i < sb.length(); i++) {
+            if (sb.charAt(i) == '\\') {
+                sb.deleteCharAt(i);
+                continue;
+            }
+
+            if (sb.charAt(i) == ' ' && notQuoted) {
+                String arg = sb.substring(start, i);
+                if (!arg.isEmpty()) {
+                    args.add(arg);
+                }
+                start = i + 1;
+            } else if (sb.charAt(i) == '"') {
+                sb.deleteCharAt(i);
+                --i;
+                notQuoted = !notQuoted;
+            }
+        }
+
+        String arg = sb.substring(start);
+        if (!arg.isEmpty()) {
+            args.add(arg);
+        }
+        return args;
+    }
+
     @Override
     public boolean dispatch(CommandSender sender, String cmdLine) {
-        String[] args = cmdLine.split(" ");
-
-        if (args.length == 0) {
+        ArrayList<String> parsed = parseArguments(cmdLine);
+        if (parsed.size() == 0) {
             return false;
         }
 
-        String sentCommandLabel = args[0].toLowerCase();
-        String[] newargs = new String[args.length - 1];
-        System.arraycopy(args, 1, newargs, 0, newargs.length);
-        args = newargs;
+        String sentCommandLabel = parsed.remove(0).toLowerCase();
+        String[] args = parsed.toArray(new String[parsed.size()]);
         Command target = this.getCommand(sentCommandLabel);
 
         if (target == null) {
             return false;
         }
 
+        target.timing.startTiming();
         try {
             target.execute(sender, sentCommandLabel, args);
         } catch (Exception e) {
             sender.sendMessage(new TranslationContainer(TextFormat.RED + "%commands.generic.exception"));
-            this.server.getLogger().critical(this.server.getLanguage().translateString("nukkit.command.exception", new String[]{cmdLine, target.toString(), Utils.getExceptionMessage(e)}));
+            this.server.getLogger().critical(this.server.getLanguage().translateString("nukkit.command.exception", cmdLine, target.toString(), Utils.getExceptionMessage(e)));
             MainLogger logger = sender.getServer().getLogger();
             if (logger != null) {
                 logger.logException(e);
             }
         }
+        target.timing.stopTiming();
 
         return true;
     }

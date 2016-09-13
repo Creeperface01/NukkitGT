@@ -18,8 +18,8 @@ import java.util.concurrent.ThreadLocalRandom;
 public abstract class BlockLiquid extends BlockTransparent {
 
     public int adjacentSources = 0;
-    public boolean[] isOptimalFlowDirection = {false, false, false, false};
-    public int[] flowinCost = {0, 0, 0, 0};
+    public final boolean[] isOptimalFlowDirection = {false, false, false, false};
+    public final int[] flowinCost = {0, 0, 0, 0};
     private Vector3 temporalVector = null;
 
     protected BlockLiquid(int meta) {
@@ -251,7 +251,6 @@ public abstract class BlockLiquid extends BlockTransparent {
                         this.getLevel().setBlock(this, new BlockAir(), true);
                     } else {
                         this.getLevel().setBlock(this, this.getBlock(decay), true);
-                        this.getLevel().scheduleUpdate(this, this.tickRate());
                     }
                 } else if (flag) {
                     //this.getLevel().scheduleUpdate(this, this.tickRate());
@@ -275,7 +274,9 @@ public abstract class BlockLiquid extends BlockTransparent {
                 } else {
                     this.flowIntoBlock(bottomBlock, decay | 0x08);
                 }
-            } else if (decay >= 0 && (decay == 0 || !bottomBlock.canBeFlowedInto())) {
+            }
+
+            if (decay >= 0 && ((decay == 0 && this.getDamage() == 0) || (!bottomBlock.canBeFlowedInto() && !(bottomBlock instanceof BlockLiquid)))) {
                 boolean[] flags = this.getOptimalFlowDirections();
 
                 int l = decay + multiplier;
@@ -318,9 +319,8 @@ public abstract class BlockLiquid extends BlockTransparent {
             if (block.getId() > 0) {
                 if (this instanceof BlockLava) {
                     this.triggerLavaMixEffects(block);
-                } else {
-                    this.getLevel().useBreakOn(block);
                 }
+                this.getLevel().useBreakOn(block);
             }
 
             this.getLevel().setBlock(block, this.getBlock(newFlowDecay), true);

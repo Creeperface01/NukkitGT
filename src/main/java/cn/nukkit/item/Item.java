@@ -297,6 +297,7 @@ public class Item implements Cloneable {
     public static final int DARK_OAK_DOOR_BLOCK = 197;
 
     public static final int GRASS_PATH = 198;
+    public static final int ITEM_FRAME_BLOCK = 199;
 
     public static final int PODZOL = 243;
     public static final int BEETROOT_BLOCK = 244;
@@ -529,7 +530,7 @@ public class Item implements Cloneable {
     public static Class[] list = null;
 
     protected Block block = null;
-    protected int id;
+    protected final int id;
     protected int meta;
     protected boolean hasMeta = true;
     private byte[] tags = new byte[0];
@@ -717,7 +718,7 @@ public class Item implements Cloneable {
             list[RABBIT_STEW] = ItemRabbitStew.class;
             list[POISONOUS_POTATO] = ItemPotatoPoisonous.class;
             list[ROTTEN_FLESH] = ItemRottenFlesh.class;
-
+            list[ITEM_FRAME] = ItemItemFrame.class;
             list[FLOWER_POT] = ItemFlowerPot.class;
 
             for (int i = 0; i < 256; ++i) {
@@ -730,7 +731,7 @@ public class Item implements Cloneable {
         initCreativeItems();
     }
 
-    private static ArrayList<Item> creative = new ArrayList<>();
+    private static final ArrayList<Item> creative = new ArrayList<>();
 
     private static void initCreativeItems() {
         clearCreativeItems();
@@ -1486,7 +1487,7 @@ public class Item implements Cloneable {
         return null;
     }
 
-    public Item addEnchantment(Enchantment... enchantments) {
+    public void addEnchantment(Enchantment... enchantments) {
         CompoundTag tag;
         if (!this.hasCompoundTag()) {
             tag = new CompoundTag();
@@ -1525,7 +1526,6 @@ public class Item implements Cloneable {
         }
 
         this.setNamedTag(tag);
-        return this;
     }
 
     public Enchantment[] getEnchantments() {

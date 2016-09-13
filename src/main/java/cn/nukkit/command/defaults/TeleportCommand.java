@@ -4,8 +4,8 @@ package cn.nukkit.command.defaults;
 import cn.nukkit.Player;
 import cn.nukkit.command.Command;
 import cn.nukkit.command.CommandSender;
-import cn.nukkit.event.TranslationContainer;
 import cn.nukkit.event.player.PlayerTeleportEvent;
+import cn.nukkit.lang.TranslationContainer;
 import cn.nukkit.level.Location;
 import cn.nukkit.math.NukkitMath;
 import cn.nukkit.utils.TextFormat;
@@ -72,15 +72,15 @@ public class TeleportCommand extends VanillaCommand {
             } else {
                 pos = 0;
             }
-            int x;
-            int y;
-            int z;
+            double x;
+            double y;
+            double z;
             double yaw;
             double pitch;
             try {
-                x = Integer.parseInt(args[pos++]);
-                y = Integer.parseInt(args[pos++]);
-                z = Integer.parseInt(args[pos++]);
+                x = Double.parseDouble(args[pos++]);
+                y = Double.parseDouble(args[pos++]);
+                z = Double.parseDouble(args[pos++]);
                 yaw = ((Player) target).getYaw();
                 pitch = ((Player) target).getPitch();
             } catch (NumberFormatException e1) {

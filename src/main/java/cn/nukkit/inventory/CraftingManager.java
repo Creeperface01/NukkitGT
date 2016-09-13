@@ -14,13 +14,13 @@ import java.util.*;
  */
 public class CraftingManager {
 
-    public Map<UUID, Recipe> recipes = new HashMap<>();
+    public final Map<UUID, Recipe> recipes = new HashMap<>();
 
-    protected Map<String, Map<String, Recipe>> recipeLookup = new HashMap<>();
+    protected final Map<String, Map<String, Recipe>> recipeLookup = new HashMap<>();
 
-    public Map<String, FurnaceRecipe> furnaceRecipes = new HashMap<>();
+    public final Map<String, FurnaceRecipe> furnaceRecipes = new HashMap<>();
 
-    public Map<String, BrewingRecipe> brewingRecipes = new HashMap<>();
+    public final Map<String, BrewingRecipe> brewingRecipes = new HashMap<>();
 
     private static int RECIPE_COUNT = 0;
 
@@ -59,7 +59,7 @@ public class CraftingManager {
                 "   ",
                 "XX ",
                 "XX "
-        )).setIngredient("X", Item.get(Item.SNOWBALL, 0 , 1)));
+        )).setIngredient("X", Item.get(Item.SNOWBALL, 0, 1)));
 
         this.registerRecipe((new ShapedRecipe(Item.get(Item.SNOW_LAYER, 0, 6),
                 "   ",
@@ -72,7 +72,7 @@ public class CraftingManager {
                 "X ",
                 "X "
         )).setIngredient("X", Item.get(Item.WOODEN_PLANK, null)));
-        
+
         this.registerRecipe((new ShapedRecipe(Item.get(Item.WOODEN_PLANK, BlockPlanks.OAK, 4),
                 "X"
         )).setIngredient("X", Item.get(Item.WOOD, BlockWood.OAK, 1)));
@@ -616,6 +616,12 @@ public class CraftingManager {
                 " I ",
                 "CCC"
         )).setIngredient("C", Item.get(Item.COBBLESTONE, 0, 1)).setIngredient("I", Item.get(Item.BLAZE_ROD, 0, 1)));
+
+        this.registerRecipe((new BigShapedRecipe(Item.get(Item.ITEM_FRAME, 0, 3),
+                "SSS",
+                "SLS",
+                "SSS"
+        )).setIngredient("S", Item.get(Item.STICK, 0, 1)).setIngredient("L", Item.get(Item.LEATHER, 0, 1)));
     }
 
     protected void registerFurnace() {
@@ -723,7 +729,7 @@ public class CraftingManager {
                 "XXX",
                 "XYX",
                 "XXX"
-        )).setIngredient("X", Item.get(Item.GOLD_NUGGET, 0, 1)).setIngredient("Y", Item.get(Item.APPLE, 0, 1)));
+        )).setIngredient("X", Item.get(Item.GOLD_INGOT, 0, 1)).setIngredient("Y", Item.get(Item.APPLE, 0, 1)));
 
         this.registerRecipe((new BigShapedRecipe(Item.get(Item.GOLDEN_APPLE, 1, 1),
                 "XXX",
@@ -1111,12 +1117,12 @@ public class CraftingManager {
     }
 
     public static class Entry {
-        int resultItemId;
-        int resultMeta;
-        int ingredientItemId;
-        int ingredientMeta;
-        String recipeShape;
-        int resultAmount;
+        final int resultItemId;
+        final int resultMeta;
+        final int ingredientItemId;
+        final int ingredientMeta;
+        final String recipeShape;
+        final int resultAmount;
 
         public Entry(int resultItemId, int resultMeta, int ingredientItemId, int ingredientMeta, String recipeShape, int resultAmount) {
             this.resultItemId = resultItemId;

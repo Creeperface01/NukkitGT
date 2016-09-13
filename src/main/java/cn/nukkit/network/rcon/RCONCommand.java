@@ -4,12 +4,13 @@ import java.nio.channels.SocketChannel;
 
 /**
  * A data structure to hold sender, request ID and command itself.
+ *
  * @author Tee7even
  */
 public class RCONCommand {
-    private SocketChannel sender;
-    private int id;
-    private String command;
+    private final SocketChannel sender;
+    private final int id;
+    private final String command;
 
     public RCONCommand(SocketChannel sender, int id, String command) {
         this.sender = sender;

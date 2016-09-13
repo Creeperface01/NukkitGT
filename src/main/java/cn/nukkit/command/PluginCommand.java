@@ -1,6 +1,6 @@
 package cn.nukkit.command;
 
-import cn.nukkit.event.TranslationContainer;
+import cn.nukkit.lang.TranslationContainer;
 import cn.nukkit.plugin.Plugin;
 
 /**
@@ -9,7 +9,7 @@ import cn.nukkit.plugin.Plugin;
  */
 public class PluginCommand<T extends Plugin> extends Command implements PluginIdentifiableCommand {
 
-    private T owningPlugin;
+    private final T owningPlugin;
 
     private CommandExecutor executor;
 
