@@ -80,6 +80,8 @@ public class EntityItem extends Entity {
             this.pickupDelay = this.namedTag.getShort("PickupDelay");
         }
 
+        //System.out.println("init delay: "+pickupDelay);
+
         if (this.namedTag.contains("Owner")) {
             this.owner = this.namedTag.getString("Owner");
         }
@@ -132,6 +134,7 @@ public class EntityItem extends Entity {
 
             if (this.pickupDelay > 0 && this.pickupDelay < 32767) {
                 this.pickupDelay -= tickDiff;
+
                 if (this.pickupDelay < 0) {
                     this.pickupDelay = 0;
                 }

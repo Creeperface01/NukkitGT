@@ -7,11 +7,6 @@ import org.fusesource.jansi.Ansi.Attribute;
 import org.fusesource.jansi.Ansi.Color;
 import org.fusesource.jansi.AnsiConsole;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.EnumMap;
@@ -23,8 +18,6 @@ import java.util.Map;
  */
 public class MainLogger extends ThreadedLogger {
 
-    protected File logFile;
-    protected String logStream = "";
     protected boolean shutdown;
     protected boolean logDebug = false;
     private final Map<TextFormat, String> replacements = new EnumMap<>(TextFormat.class);
@@ -43,14 +36,7 @@ public class MainLogger extends ThreadedLogger {
             throw new RuntimeException("MainLogger has been already created");
         }
         logger = this;
-        this.logFile = new File(logFile);
-        if (!this.logFile.exists()) {
-            try {
-                this.logFile.createNewFile();
-            } catch (IOException e) {
-                this.logException(e);
-            }
-        }
+
         replacements.put(TextFormat.BLACK, Ansi.ansi().a(Attribute.RESET).fg(Color.BLACK).boldOff().toString());
         replacements.put(TextFormat.DARK_BLUE, Ansi.ansi().a(Attribute.RESET).fg(Color.BLUE).boldOff().toString());
         replacements.put(TextFormat.DARK_GREEN, Ansi.ansi().a(Attribute.RESET).fg(Color.GREEN).boldOff().toString());
@@ -176,7 +162,6 @@ public class MainLogger extends ThreadedLogger {
         System.out.println(colorize(message));
         CommandReader.getInstance().unstashLine();
         String str = new SimpleDateFormat("Y-M-d").format(now) + " " + TextFormat.clean(message) + "" + "\r\n";
-        this.logStream += str;
 
         synchronized (this) {
             this.notify();
@@ -203,7 +188,7 @@ public class MainLogger extends ThreadedLogger {
 
     @Override
     public void run() {
-        this.shutdown = false;
+        /*this.shutdown = false;
         while (!this.shutdown) {
             while (this.logStream.length() > 0) {
                 String chunk = this.logStream;
@@ -238,7 +223,7 @@ public class MainLogger extends ThreadedLogger {
             } catch (Exception e) {
                 this.logException(e);
             }
-        }
+        }*/
     }
 
     @Override

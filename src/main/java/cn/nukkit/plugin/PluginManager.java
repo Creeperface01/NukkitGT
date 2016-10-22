@@ -11,6 +11,7 @@ import cn.nukkit.timings.Timings;
 import cn.nukkit.utils.MainLogger;
 import cn.nukkit.utils.PluginException;
 import cn.nukkit.utils.Utils;
+import com.google.common.collect.Lists;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -517,8 +518,10 @@ public class PluginManager {
     }
 
     public void disablePlugins() {
-        for (Plugin plugin : this.getPlugins().values()) {
-            this.disablePlugin(plugin);
+        ListIterator<Plugin> plugins = new ArrayList<>(this.getPlugins().values()).listIterator(this.getPlugins().size());
+
+        while (plugins.hasPrevious()) {
+            this.disablePlugin(plugins.previous());
         }
     }
 

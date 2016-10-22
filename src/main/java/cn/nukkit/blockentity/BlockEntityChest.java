@@ -15,6 +15,8 @@ import cn.nukkit.nbt.NBTIO;
 import cn.nukkit.nbt.tag.CompoundTag;
 import cn.nukkit.nbt.tag.ListTag;
 
+import java.util.HashSet;
+
 /**
  * author: MagicDroidX
  * Nukkit Project
@@ -41,7 +43,7 @@ public class BlockEntityChest extends BlockEntitySpawnable implements InventoryH
     @Override
     public void close() {
         if (!this.closed) {
-            for (Player player : this.getInventory().getViewers()) {
+            for (Player player : new HashSet<>(this.getInventory().getViewers())) {
                 player.removeWindow(this.getInventory());
             }
 

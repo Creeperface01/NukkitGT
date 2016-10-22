@@ -9,7 +9,7 @@ public interface ProtocolInfo {
     /**
      * Actual Minecraft: PE protocol version
      */
-    byte CURRENT_PROTOCOL = 82;
+    byte CURRENT_PROTOCOL = 84;
 
     byte MINIMAL_PROTOCOL = 81;
 

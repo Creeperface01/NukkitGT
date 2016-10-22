@@ -1548,7 +1548,7 @@ public class Level implements ChunkManager, Metadatable {
             Enchantment eff = item.getEnchantment(Enchantment.ID_EFFICIENCY);
 
             if (eff != null && eff.getLevel() > 0) {
-                breakTime *= 1 - (0.3 * eff.getLevel());
+                breakTime *= 1 - (0.3 * eff.getLevel() + 1);
             }
 
             breakTime -= 0.15;

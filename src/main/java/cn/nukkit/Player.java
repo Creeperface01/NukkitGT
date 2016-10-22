@@ -462,6 +462,7 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
         this.gamemode = this.server.getGamemode();
         this.setLevel(this.server.getDefaultLevel());
         this.viewDistance = this.server.getViewDistance();
+        this.chunkRadius = this.viewDistance;
         //this.newPosition = new Vector3(0, 0, 0);
         this.boundingBox = new AxisAlignedBB(0, 0, 0, 0, 0, 0);
 
@@ -1979,7 +1980,7 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
                     if (useItemPacket.face >= 0 && useItemPacket.face <= 5) {
                         this.setDataFlag(Player.DATA_FLAGS, Player.DATA_FLAG_ACTION, false);
 
-                        if (!this.canInteract(blockVector.add(0.5, 0.5, 0.5), 13)) {
+                        if (!this.canInteract(blockVector.add(0.5, 0.5, 0.5), this.isCreative() ? 13 : 7)) {
                         } else if (this.isCreative()) {
                             Item i = this.inventory.getItemInHand();
                             if (this.level.useItemOn(blockVector, i, useItemPacket.face, useItemPacket.fx, useItemPacket.fy, useItemPacket.fz, this) != null) {
@@ -2400,7 +2401,7 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
 
                     Item oldItem = item.clone();
 
-                    if (this.canInteract(vector.add(0.5, 0.5, 0.5), this.isCreative() ? 13 : 6) && (item = this.level.useBreakOn(vector, item, this, true)) != null) {
+                    if (this.canInteract(vector.add(0.5, 0.5, 0.5), this.isCreative() ? 13 : 7) && (item = this.level.useBreakOn(vector, item, this, true)) != null) {
                         if (this.isSurvival()) {
                             this.getFoodData().updateFoodExpLevel(0.025);
                             if (!item.deepEquals(oldItem) || item.getCount() != oldItem.getCount()) {
@@ -2477,7 +2478,7 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
                         HashMap<Integer, Float> damage = new HashMap<>();
                         damage.put(EntityDamageEvent.MODIFIER_BASE, damageTable.getOrDefault(item.getId(), 1f));
 
-                        if (!this.canInteract(targetEntity, 8)) {
+                        if (!this.canInteract(targetEntity, isCreative() ? 8 : 3)) {
                             cancelled = true;
                         } else if (targetEntity instanceof Player) {
                             if ((((Player) targetEntity).getGamemode() & 0x01) > 0) {
@@ -2743,10 +2744,6 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
                 case ProtocolInfo.CRAFTING_EVENT_PACKET:
                     CraftingEventPacket craftingEventPacket = (CraftingEventPacket) packet;
 
-                    //System.out.println("Craftingevent windowID: "+craftingEventPacket.windowId+"   type: "+craftingEventPacket.type+"     input: "+Arrays.toString(craftingEventPacket.input)+"    output: "+Arrays.toString(craftingEventPacket.output));
-                    //System.out.println("name: "+craftingEventPacket.output[0].getCustomName());
-                    //System.out.println("crafting type: "+craftingType);
-
                     if (!this.spawned || !this.isAlive()) {
                         break;
                     }
@@ -2777,7 +2774,7 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
                         if(recipe == null){
                             //Item renamed
 
-                            craftingEventPacket.output[0].getNamedTag().print(System.out);
+                            //craftingEventPacket.output[0].getNamedTag().print(System.out);
                             if(!anvilInventory.onRename(this, craftingEventPacket.output[0])){
                                 this.getServer().getLogger().debug(this.getName()+" failed to rename an item in an anvil");
                                 this.inventory.sendContents(this);
@@ -2817,7 +2814,7 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
 
                         recipe = null;
 
-                        ArrayList<Item> ingredientz = null;
+                        ArrayList<Item> ingredientz = new ArrayList<>();
 
                         for (Recipe r : recipes) {
                             if (r instanceof ShapedRecipe) {

@@ -10,6 +10,7 @@ import cn.nukkit.event.entity.EntityDamageByBlockEvent;
 import cn.nukkit.event.entity.EntityDamageEvent;
 import cn.nukkit.item.Item;
 import cn.nukkit.level.Level;
+import cn.nukkit.math.AxisAlignedBB;
 import cn.nukkit.math.Vector3;
 import cn.nukkit.potion.Effect;
 import cn.nukkit.utils.BlockColor;
@@ -264,5 +265,10 @@ public class BlockFire extends BlockFlowable {
     @Override
     public BlockColor getColor() {
         return BlockColor.AIR_BLOCK_COLOR;
+    }
+
+    @Override
+    public AxisAlignedBB getCollisionBoundingBox() {
+        return new AxisAlignedBB(x, y, z, x + 1, y + 1, z + 1);
     }
 }
