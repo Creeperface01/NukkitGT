@@ -9,7 +9,7 @@ import cn.nukkit.block.BlockDirt;
  */
 public abstract class WateryBiome extends NormalBiome {
     public WateryBiome() {
-        this.setGroundCover(new Block[]{
+        this.setGroundCover(new Block[] {
                 new BlockDirt(),
                 new BlockDirt(),
                 new BlockDirt(),

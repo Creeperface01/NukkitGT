@@ -32,9 +32,12 @@ public abstract class Biome {
 
 
     public static final int SMALL_MOUNTAINS = 20;
+    public static final int JUNGLE = 21;
 
 
     public static final int BIRCH_FOREST = 27;
+
+    public static final int SAVANNA = 35;
 
 
     public static final int MAX_BIOMES = 256;
