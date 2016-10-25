@@ -5,12 +5,12 @@ import cn.nukkit.Server;
 import cn.nukkit.entity.Entity;
 import cn.nukkit.entity.projectile.EntityArrow;
 import cn.nukkit.event.block.BlockBurnEvent;
+import cn.nukkit.event.block.BlockIgniteEvent;
 import cn.nukkit.event.entity.EntityCombustByBlockEvent;
 import cn.nukkit.event.entity.EntityDamageByBlockEvent;
 import cn.nukkit.event.entity.EntityDamageEvent;
 import cn.nukkit.item.Item;
 import cn.nukkit.level.Level;
-import cn.nukkit.math.AxisAlignedBB;
 import cn.nukkit.math.Vector3;
 import cn.nukkit.potion.Effect;
 import cn.nukkit.utils.BlockColor;
@@ -148,7 +148,8 @@ public class BlockFire extends BlockFlowable {
                                         k += (y - (this.y + 1)) * 100;
                                     }
 
-                                    int chance = this.getChanceOfNeighborsEncouragingFire(this.getLevel().getBlock(new Vector3(x, y, z)));
+                                    Block block = this.getLevel().getBlock(new Vector3(x, y, z));
+                                    int chance = this.getChanceOfNeighborsEncouragingFire(block);
 
                                     if (chance > 0) {
                                         int t = (chance + 40 + this.getLevel().getServer().getDifficulty() * 7) / (meta + 30);
@@ -162,8 +163,13 @@ public class BlockFire extends BlockFlowable {
                                                 damage = 15;
                                             }
 
-                                            this.getLevel().setBlock(new Vector3(x, y, z), new BlockFire(damage), true);
-                                            this.getLevel().scheduleUpdate(new Vector3(x, y, z), this.tickRate());
+                                            BlockIgniteEvent e = new BlockIgniteEvent(block, this, null, BlockIgniteEvent.BlockIgniteCause.SPREAD);
+                                            this.level.getServer().getPluginManager().callEvent(e);
+
+                                            if (!e.isCancelled()) {
+                                                this.getLevel().setBlock(block, new BlockFire(damage), true);
+                                                this.getLevel().scheduleUpdate(block, this.tickRate());
+                                            }
                                         }
                                     }
                                 }
@@ -191,8 +197,13 @@ public class BlockFire extends BlockFlowable {
                     meta = 15;
                 }
 
-                this.getLevel().setBlock(block, new BlockFire(meta), true);
-                this.getLevel().scheduleUpdate(block, this.tickRate());
+                BlockIgniteEvent e = new BlockIgniteEvent(block, this, null, BlockIgniteEvent.BlockIgniteCause.SPREAD);
+                this.level.getServer().getPluginManager().callEvent(e);
+
+                if (!e.isCancelled()) {
+                    this.getLevel().setBlock(block, new BlockFire(meta), true);
+                    this.getLevel().scheduleUpdate(block, this.tickRate());
+                }
             } else {
                 BlockBurnEvent ev = new BlockBurnEvent(block);
                 this.getLevel().getServer().getPluginManager().callEvent(ev);
@@ -265,10 +276,5 @@ public class BlockFire extends BlockFlowable {
     @Override
     public BlockColor getColor() {
         return BlockColor.AIR_BLOCK_COLOR;
-    }
-
-    @Override
-    public AxisAlignedBB getCollisionBoundingBox() {
-        return new AxisAlignedBB(x, y, z, x + 1, y + 1, z + 1);
     }
 }

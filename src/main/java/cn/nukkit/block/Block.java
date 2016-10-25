@@ -489,6 +489,7 @@ public abstract class Block extends Position implements Metadatable, Cloneable {
             list[WOODEN_PRESSURE_PLATE] = BlockPressurePlateWood.class;
 
             list[SKULL_BLOCK] = BlockSkull.class;
+            list[CAULDRON_BLOCK] = BlockCauldron.class;
 
             for (int id = 0; id < 256; id++) {
                 Class c = list[id];
@@ -573,6 +574,11 @@ public abstract class Block extends Position implements Metadatable, Cloneable {
 
     public boolean place(Item item, Block block, Block target, int face, double fx, double fy, double fz, Player player) {
         return this.getLevel().setBlock(this, this, true, true);
+    }
+
+    @Override
+    public Block getLevelBlock() {
+        return this;
     }
 
     public boolean isBreakable(Item item) {
@@ -758,11 +764,7 @@ public abstract class Block extends Position implements Metadatable, Cloneable {
     }
 
     public boolean collidesWithBB(AxisAlignedBB bb) {
-        return collidesWithBB(bb, false);
-    }
-
-    public boolean collidesWithBB(AxisAlignedBB bb, boolean entityCollision) {
-        AxisAlignedBB bb1 = entityCollision ? getCollisionBoundingBox() : this.getBoundingBox();
+        AxisAlignedBB bb1 = this.getBoundingBox();
         return bb1 != null && bb.intersectsWith(bb1);
     }
 
@@ -775,10 +777,6 @@ public abstract class Block extends Position implements Metadatable, Cloneable {
             this.boundingBox = this.recalculateBoundingBox();
         }
         return this.boundingBox;
-    }
-
-    public AxisAlignedBB getCollisionBoundingBox() {
-        return getBoundingBox();
     }
 
     protected AxisAlignedBB recalculateBoundingBox() {

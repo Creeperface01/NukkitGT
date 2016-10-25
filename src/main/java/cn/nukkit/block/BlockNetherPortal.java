@@ -3,7 +3,6 @@ package cn.nukkit.block;
 import cn.nukkit.entity.Entity;
 import cn.nukkit.event.entity.EntityPortalEnterEvent;
 import cn.nukkit.item.Item;
-import cn.nukkit.math.AxisAlignedBB;
 import cn.nukkit.utils.BlockColor;
 
 /**
@@ -65,12 +64,6 @@ public class BlockNetherPortal extends BlockFlowable {
         return result;
     }
 
-    @Override
-    public AxisAlignedBB getCollisionBoundingBox() {
-        AxisAlignedBB bb = new AxisAlignedBB(this.x, this.y, this.z, this.x + 1, this.y + 1, this.z + 1);
-
-        return bb;
-    }
 
     @Override
     public boolean hasEntityCollision() {
@@ -80,6 +73,17 @@ public class BlockNetherPortal extends BlockFlowable {
     @Override
     public void onEntityCollide(Entity entity) {
         entity.inPortalTicks++;
+
+        if (entity.inPortalTicks >= 80) {
+            EntityPortalEnterEvent ev = new EntityPortalEnterEvent(entity, EntityPortalEnterEvent.TYPE_NETHER);
+            this.level.getServer().getPluginManager().callEvent(ev);
+
+            if (ev.isCancelled()) {
+                return;
+            }
+
+            //todo: teleport to the nether
+        }
     }
 
 

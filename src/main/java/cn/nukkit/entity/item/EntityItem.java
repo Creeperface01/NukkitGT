@@ -80,8 +80,6 @@ public class EntityItem extends Entity {
             this.pickupDelay = this.namedTag.getShort("PickupDelay");
         }
 
-        //System.out.println("init delay: "+pickupDelay);
-
         if (this.namedTag.contains("Owner")) {
             this.owner = this.namedTag.getString("Owner");
         }
@@ -134,7 +132,6 @@ public class EntityItem extends Entity {
 
             if (this.pickupDelay > 0 && this.pickupDelay < 32767) {
                 this.pickupDelay -= tickDiff;
-
                 if (this.pickupDelay < 0) {
                     this.pickupDelay = 0;
                 }
@@ -184,16 +181,18 @@ public class EntityItem extends Entity {
     @Override
     public void saveNBT() {
         super.saveNBT();
-        this.namedTag.putCompound("Item", NBTIO.putItemHelper(this.item));
-        this.namedTag.putShort("Health", this.getHealth());
-        this.namedTag.putShort("Age", this.age);
-        this.namedTag.putShort("PickupDelay", this.pickupDelay);
-        if (this.owner != null) {
-            this.namedTag.putString("Owner", this.owner);
-        }
-
-        if (this.thrower != null) {
-            this.namedTag.putString("Thrower", this.thrower);
+        if (this.item != null) { // Yes, a item can be null... I don't know what causes this, but it can happen.
+	        this.namedTag.putCompound("Item", NBTIO.putItemHelper(this.item));
+	        this.namedTag.putShort("Health", this.getHealth());
+	        this.namedTag.putShort("Age", this.age);
+	        this.namedTag.putShort("PickupDelay", this.pickupDelay);
+	        if (this.owner != null) {
+	            this.namedTag.putString("Owner", this.owner);
+	        }
+	
+	        if (this.thrower != null) {
+	            this.namedTag.putString("Thrower", this.thrower);
+	        }
         }
     }
 

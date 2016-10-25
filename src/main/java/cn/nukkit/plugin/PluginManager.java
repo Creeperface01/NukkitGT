@@ -11,7 +11,6 @@ import cn.nukkit.timings.Timings;
 import cn.nukkit.utils.MainLogger;
 import cn.nukkit.utils.PluginException;
 import cn.nukkit.utils.Utils;
-import com.google.common.collect.Lists;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -455,10 +454,10 @@ public class PluginManager {
                     this.addPermission(permission);
                 }
                 plugin.getPluginLoader().enablePlugin(plugin);
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 MainLogger logger = this.server.getLogger();
                 if (logger != null) {
-                    logger.logException(e);
+                    logger.logException(new RuntimeException(e));
                 }
                 this.disablePlugin(plugin);
             }

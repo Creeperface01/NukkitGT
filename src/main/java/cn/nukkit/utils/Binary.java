@@ -3,6 +3,7 @@ package cn.nukkit.utils;
 import cn.nukkit.entity.Entity;
 import cn.nukkit.entity.data.*;
 
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -340,6 +341,90 @@ public class Binary {
         };
     }
 
+    //TODO: proper varlong support
+
+    public static int readVarInt(BinaryStream stream) {
+        long raw = readUnsignedVarInt(stream);
+        long temp = (((raw << 31) >> 31) ^ raw) >> 1;
+        return (int) (temp ^ (raw & (1 << 31)));
+    }
+
+    public static long readVarInt64(BinaryStream stream){
+        long raw = readUnsignedVarInt64(stream);
+        long temp = (((raw << 63) >> 63) ^ raw) >> 1;
+        return temp ^ (raw & 1 << 63);
+    }
+
+    public static int readVarInt(DataInputStream stream) throws IOException {
+        long raw = readUnsignedVarInt(stream);
+        long temp = (((raw << 31) >> 31) ^ raw) >> 1;
+        return (int) (temp ^ (raw & (1 << 31)));
+    }
+
+    public static long readUnsignedVarInt(DataInputStream stream) throws IOException {
+        long value = 0;
+        int i = 0;
+        byte b;
+        do {
+            if (i > 63) {
+                throw new IllegalArgumentException("Varint did not terminate after 10 bytes!");
+            }
+            value |= (((b = stream.readByte()) & 0x7f) << i);
+            i += 7;
+        } while ((b & 0x80) != 0);
+        return value;
+    }
+
+    public static long readUnsignedVarInt(BinaryStream stream) {
+        long value = 0;
+        int i = 0;
+        int b;
+        do {
+            if (i > 63) {
+                throw new IllegalArgumentException("Varint did not terminate after 10 bytes!");
+            }
+            value |= (((b = stream.getByte()) & 0x7f) << i);
+            i += 7;
+        } while ((b & 0x80) != 0);
+        return value;
+    }
+
+    public static long readUnsignedVarInt64(BinaryStream stream){
+        long value = 0;
+        int i = 0;
+        int b;
+        while(((b = stream.getByte()) & 0x80) != 0){
+            value |= (b & 0x7f) << i;
+            i += 7;
+            if(i > 63){
+                throw new IllegalArgumentException("Value is too long to be an int64");
+            }
+        }
+        return value | (b << i);
+    }
+
+    public static byte[] writeVarInt(int v) {
+        return writeUnsignedVarInt((v << 1) ^ (v >> 31));
+    }
+
+    public static byte[] writeUnsignedVarInt(long v) {
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        int loops = 0;
+        do {
+            if (loops > 9) {
+                throw new IllegalArgumentException("Varint cannot be longer than 10 bytes!"); //for safety reasons
+            }
+            long w = v & 0x7f;
+            if ((v >> 7) != 0) {
+                w = v | 0x80;
+            }
+            stream.write((byte) w);
+            v = ((v >> 7) & (Integer.MAX_VALUE >> 6));
+            ++loops;
+        } while (v != 0);
+        return stream.toByteArray();
+    }
+
     public static byte[] reserveBytes(byte[] bytes) {
         byte[] newBytes = new byte[bytes.length];
         for (int i = 0; i < bytes.length; i++) {
@@ -398,8 +483,9 @@ public class Binary {
     }
 
     public static byte[][] splitBytes(byte[] bytes, int chunkSize) {
-        byte[][] splits = new byte[1024][chunkSize];
+        byte[][] splits = new byte[(bytes.length + chunkSize - 1) / chunkSize][chunkSize];
         int chunks = 0;
+
         for (int i = 0; i < bytes.length; i += chunkSize) {
             if ((bytes.length - i) > chunkSize) {
                 splits[chunks] = Arrays.copyOfRange(bytes, i, i + chunkSize);
@@ -408,8 +494,6 @@ public class Binary {
             }
             chunks++;
         }
-
-        splits = Arrays.copyOf(splits, chunks);
 
         return splits;
     }

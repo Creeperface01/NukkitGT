@@ -4,6 +4,7 @@ import cn.nukkit.Player;
 import cn.nukkit.Server;
 import cn.nukkit.block.BlockAir;
 import cn.nukkit.entity.EntityHuman;
+import cn.nukkit.entity.EntityHumanType;
 import cn.nukkit.event.entity.EntityArmorChangeEvent;
 import cn.nukkit.event.entity.EntityInventoryChangeEvent;
 import cn.nukkit.event.player.PlayerItemHeldEvent;
@@ -27,20 +28,20 @@ public class PlayerInventory extends BaseInventory {
 
     protected final int[] hotbar;
 
-    public PlayerInventory(EntityHuman player) {
-        super(player, InventoryType.get(InventoryType.PLAYER));
+    public PlayerInventory(EntityHumanType player) {
+        super(player, InventoryType.PLAYER);
         this.hotbar = new int[this.getHotbarSize()];
         Arrays.fill(this.hotbar, -1);
     }
 
     @Override
     public int getSize() {
-        return super.getSize() - 13;
+        return super.getSize() - 4;
     }
 
     @Override
     public void setSize(int size) {
-        super.setSize(size + 13);
+        super.setSize(size + 4);
         this.sendContents(this.getViewers());
     }
 

@@ -388,6 +388,8 @@ public class Item implements Cloneable {
 
     public static final int MINECART = 328;
 
+    public static final int SADDLE = 329;
+
     public static final int IRON_DOOR = 330;
     public static final int REDSTONE = 331;
     public static final int REDSTONE_DUST = 331;
@@ -501,6 +503,11 @@ public class Item implements Cloneable {
     public static final int RABBIT_FOOT = 414;
     public static final int RABBIT_HIDE = 415;
 
+    public static final int LEATHER_HORSE_ARMOR = 416;
+    public static final int IRON_HORSE_ARMOR = 417 ;
+    public static final int GOLD_HORSE_ARMOR = 418 ;
+    public static final int DIAMOND_HORSE_ARMOR = 419 ;
+
     public static final int SPRUCE_DOOR = 427;
     public static final int BIRCH_DOOR = 428;
     public static final int JUNGLE_DOOR = 429;
@@ -560,10 +567,10 @@ public class Item implements Cloneable {
         }
         this.count = count;
         this.name = name;
-        if (this.block != null && this.id <= 0xff && Block.list[id] != null) {
+        /*f (this.block != null && this.id <= 0xff && Block.list[id] != null) { //probably useless
             this.block = Block.get(this.id, this.meta);
             this.name = this.block.getName();
-        }
+        }*/
     }
 
     public boolean hasMeta() {
@@ -648,6 +655,7 @@ public class Item implements Cloneable {
             list[WOODEN_DOOR] = ItemDoorWood.class;
             list[BUCKET] = ItemBucket.class;
             list[MINECART] = ItemMinecart.class;
+            list[SADDLE] = ItemSaddle.class;
             list[BOAT] = ItemBoat.class;
             list[IRON_DOOR] = ItemDoorIron.class;
             list[REDSTONE] = ItemRedstone.class;
@@ -720,6 +728,12 @@ public class Item implements Cloneable {
             list[ROTTEN_FLESH] = ItemRottenFlesh.class;
             list[ITEM_FRAME] = ItemItemFrame.class;
             list[FLOWER_POT] = ItemFlowerPot.class;
+            list[CAULDRON] = ItemCauldron.class;
+
+            list[LEATHER_HORSE_ARMOR] = ItemLeatherHorseArmor.class;
+            list[IRON_HORSE_ARMOR] = ItemIronHorseArmor.class;
+            list[GOLD_HORSE_ARMOR] = ItemGoldHorseArmor.class;
+            list[DIAMOND_HORSE_ARMOR] = ItemDiamondHorseArmor.class;
 
             for (int i = 0; i < 256; ++i) {
                 if (Block.list[i] != null) {
@@ -1499,12 +1513,13 @@ public class Item implements Cloneable {
         if (!tag.contains("ench")) {
             ench = new ListTag<>("ench");
             tag.putList(ench);
+        } else {
+            ench = tag.getList("ench", CompoundTag.class);
         }
 
         for (Enchantment enchantment : enchantments) {
             boolean found = false;
 
-            ench = tag.getList("ench", CompoundTag.class);
             for (int k = 0; k < ench.size(); k++) {
                 CompoundTag entry = ench.get(k);
                 if (entry.getShort("id") == enchantment.getId()) {
@@ -1706,6 +1721,12 @@ public class Item implements Cloneable {
     }
 
     public boolean useOn(Entity entity) {
+        Enchantment fireAspect = getEnchantment(Enchantment.ID_FIRE_ASPECT);
+        if (fireAspect != null && fireAspect.getLevel() > 0) {
+            entity.setOnFire(4 * fireAspect.getLevel());
+            return true;
+        }
+
         return false;
     }
 
@@ -1771,6 +1792,18 @@ public class Item implements Cloneable {
 
     public int getEnchantAbility() {
         return 0;
+    }
+
+    public int getAttackDamage(){
+        return 1;
+    }
+
+    public int getArmorPoints(){
+        return 0;
+    }
+
+    public boolean isUnbreakable(){
+        return false;
     }
 
     @Override

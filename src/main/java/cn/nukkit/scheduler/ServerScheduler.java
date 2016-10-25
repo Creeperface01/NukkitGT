@@ -30,7 +30,13 @@ public class ServerScheduler {
     public ServerScheduler() {
         this.pending = new ConcurrentLinkedQueue<>();
         this.currentTaskId = new AtomicInteger();
-        this.queue = new PriorityQueue<>(11, (left, right) -> left.getNextRunTick() - right.getNextRunTick());
+        this.queue = new PriorityQueue<>(11, (left, right) -> {
+            int i = left.getNextRunTick() - right.getNextRunTick();
+            if (i == 0) {
+                return left.getTaskId() - right.getTaskId();
+            }
+            return i;
+        });
         this.taskMap = new ConcurrentHashMap<>();
         this.asyncPool = new AsyncPool(Server.getInstance(), WORKERS);
     }
@@ -196,9 +202,9 @@ public class ServerScheduler {
                 taskHandler.timing.startTiming();
                 try {
                     taskHandler.run(currentTick);
-                } catch (Exception e) {
+                } catch (Throwable e) {
                     Server.getInstance().getLogger().critical("Could not execute taskHandler " + taskHandler.getTaskId() + ": " + e.getMessage());
-                    Server.getInstance().getLogger().logException(e);
+                    Server.getInstance().getLogger().logException(e instanceof Exception ? (Exception) e : new RuntimeException(e));
                 }
                 taskHandler.timing.stopTiming();
             }

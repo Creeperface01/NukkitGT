@@ -2,8 +2,10 @@ package cn.nukkit.item;
 
 import cn.nukkit.block.Block;
 import cn.nukkit.entity.Entity;
+import cn.nukkit.item.enchantment.Enchantment;
 import cn.nukkit.nbt.tag.ByteTag;
 import cn.nukkit.nbt.tag.Tag;
+import java.util.Random;
 
 /**
  * author: MagicDroidX
@@ -55,7 +57,7 @@ public abstract class ItemTool extends Item {
 
     @Override
     public boolean useOn(Block block) {
-        if (this.isUnbreakable()) {
+        if (this.isUnbreakable() || !canReduceDamage()) {
             return true;
         }
 
@@ -80,7 +82,7 @@ public abstract class ItemTool extends Item {
 
     @Override
     public boolean useOn(Entity entity) {
-        if (this.isUnbreakable()) {
+        if (this.isUnbreakable() || !canReduceDamage()) {
             return true;
         }
 
@@ -89,9 +91,20 @@ public abstract class ItemTool extends Item {
         } else {
             this.meta++;
         }
+
         return true;
     }
 
+    private boolean canReduceDamage() {
+        if (!hasEnchantments()) {
+            return true;
+        }
+
+        Enchantment durability = getEnchantment(Enchantment.ID_DURABILITY);
+        return durability != null && durability.getLevel() > 0 && (100 / (durability.getLevel() + 1)) <= new Random().nextInt(100);
+    }
+
+    @Override
     public boolean isUnbreakable() {
         Tag tag = this.getNamedTagEntry("Unbreakable");
         return tag instanceof ByteTag && ((ByteTag) tag).data > 0;
