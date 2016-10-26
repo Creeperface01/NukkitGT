@@ -1356,19 +1356,6 @@ public class Server {
 
     public CompoundTag getOfflinePlayerData(String name) {
         name = name.toLowerCase();
-        String path = this.getDataPath() + "players/";
-        File file = new File(path + name + ".dat");
-
-        if (this.shouldSavePlayerData() && file.exists()) {
-            try {
-                return NBTIO.readCompressed(new FileInputStream(file));
-            } catch (Exception e) {
-                file.renameTo(new File(path + name + ".dat.bak"));
-                this.logger.notice(this.getLanguage().translateString("nukkit.data.playerCorrupted", name));
-            }
-        } else {
-            this.logger.notice(this.getLanguage().translateString("nukkit.data.playerNotFound", name));
-        }
 
         Position spawn = this.getDefaultLevel().getSafeSpawn();
         CompoundTag nbt = new CompoundTag()
@@ -1396,7 +1383,6 @@ public class Server {
                 .putBoolean("Invulnerable", false)
                 .putString("NameTag", name);
 
-        this.saveOfflinePlayerData(name, nbt);
         return nbt;
     }
 
