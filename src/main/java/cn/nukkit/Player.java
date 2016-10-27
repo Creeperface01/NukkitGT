@@ -202,6 +202,8 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
 
     private int hash;
 
+    public long lastPacketTime = System.currentTimeMillis();
+
     public TranslationContainer getLeaveMessage() {
         return new TranslationContainer(TextFormat.YELLOW + "%multiplayer.player.left", this.getDisplayName());
     }
@@ -1489,11 +1491,7 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
         }
 
         if (this.spawned) {
-            if(this.newPosition == null || !this.newPosition.equals(this)) {
-                this.blocksAround= null;
-            }
-
-            this.processMovement(tickDiff);
+            //this.processMovement(tickDiff);
 
             this.entityBaseTick(tickDiff);
 
@@ -1820,6 +1818,8 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
             return;
         }
 
+        lastPacketTime = System.currentTimeMillis();
+
         try (Timing timing = Timings.getReceiveDataPacketTiming(packet)) {
             DataPacketReceiveEvent ev = new DataPacketReceiveEvent(this, packet);
             this.server.getPluginManager().callEvent(ev);
@@ -1921,12 +1921,97 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
 
                     break;
                 case ProtocolInfo.MOVE_PLAYER_PACKET:
-
-
                     MovePlayerPacket movePlayerPacket = (MovePlayerPacket) packet;
-                    Vector3 newPos = new Vector3(movePlayerPacket.x, movePlayerPacket.y - this.getEyeHeight(), movePlayerPacket.z);
-
+                    Location newPos = new Location(movePlayerPacket.x, movePlayerPacket.y - this.getEyeHeight(), movePlayerPacket.z, movePlayerPacket.headYaw, movePlayerPacket.pitch);
                     boolean revert = false;
+
+                    if (!this.isAlive() || !this.spawned) {
+                        return;
+                    }
+
+                    double distanceSquared = newPos.distanceSquared(this);
+
+                    if (this.chunk == null || !this.chunk.isGenerated()) {
+                        BaseFullChunk chunk = this.level.getChunk((int) newPos.x >> 4, (int) newPos.z >> 4, false);
+                        if (chunk == null || !chunk.isGenerated()) {
+                            revert = true;
+                            this.nextChunkOrderRun = 0;
+                        } else {
+                            if (this.chunk != null) {
+                                this.chunk.removeEntity(this);
+                            }
+                            this.chunk = chunk;
+                        }
+                    }
+
+                    Vector2 newPosV2 = new Vector2(newPos.x, newPos.z);
+                    double distance = newPosV2.distance(this.x, this.z);
+
+                    Location from = new Location(
+                            this.lastX,
+                            this.lastY,
+                            this.lastZ,
+                            this.lastYaw,
+                            this.lastPitch,
+                            this.level);
+                    Location to = this.getLocation();
+
+//                    double delta = Math.pow(this.lastX - to.x, 2) + Math.pow(this.lastY - to.y, 2) + Math.pow(this.lastZ - to.z, 2);
+//                    double deltaAngle = Math.abs(this.lastYaw - to.yaw) + Math.abs(this.lastPitch - to.pitch);
+
+                    if (!revert) {// && (delta > (1 / 16) || deltaAngle > 10)) {
+
+                        boolean isFirst = this.firstMove;
+
+                        this.firstMove = false;
+                        this.lastX = to.x;
+                        this.lastY = to.y;
+                        this.lastZ = to.z;
+
+                        this.lastYaw = to.yaw;
+                        this.lastPitch = to.pitch;
+
+                        if (!isFirst) {
+                            if (!from.equals(to)) {
+                                this.blocksAround = null;
+                            }
+
+                            PlayerMoveEvent playerMoveEvent = new PlayerMoveEvent(this, from, to);
+
+                            this.server.getPluginManager().callEvent(playerMoveEvent);
+
+                            if (!(revert = playerMoveEvent.isCancelled())) { //Yes, this is intended
+                                if (!to.equals(playerMoveEvent.getTo())) { //If plugins modify the destination
+                                    this.teleport(playerMoveEvent.getTo(), null);
+                                } else {
+                                    this.addMovement(this.x, this.y + this.getEyeHeight(), this.z, this.yaw, this.pitch, this.yaw);
+                                }
+                            }
+                        }
+
+                        if (!this.isSpectator()) {
+                            this.checkNearEntities();
+                        }
+
+                        this.speed = from.subtract(to);
+                    } else if (distanceSquared == 0) {
+                        this.speed = new Vector3(0, 0, 0);
+                    }
+
+                    if(!revert && this.isFoodEnabled()) {
+                        this.getFoodData().movementUpdate(distance);
+                    }
+
+                    if (revert) {
+                        this.sendPosition(from, from.yaw, from.pitch, MovePlayerPacket.MODE_RESET);
+                        this.forceMovement = new Vector3(from.x, from.y, from.z);
+                    } else {
+                        this.forceMovement = null;
+                        if (distanceSquared != 0 && this.nextChunkOrderRun > 20) {
+                            this.nextChunkOrderRun = 20;
+                        }
+                    }
+
                     if (!this.isAlive() || !this.spawned) {
                         revert = true;
                         this.forceMovement = new Vector3(this.x, this.y, this.z);
@@ -1935,7 +2020,6 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
                     if (this.teleportPosition != null || this.forceMovement != null && (newPos.distanceSquared(this.forceMovement) > 0.1 || revert)) {
                         this.sendPosition(this.teleportPosition == null ? this.forceMovement : this.teleportPosition, movePlayerPacket.yaw, movePlayerPacket.pitch);
                     } else {
-
                         movePlayerPacket.yaw %= 360;
                         movePlayerPacket.pitch %= 360;
 
@@ -1943,20 +2027,17 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
                             movePlayerPacket.yaw += 360;
                         }
 
-                        movePackets.add(movePlayerPacket);
-
-                        this.setRotation(movePlayerPacket.yaw, movePlayerPacket.pitch);
-                        this.newPosition = newPos;
+//                        this.setRotation(movePlayerPacket.yaw, movePlayerPacket.pitch);
+                        this.setPositionAndRotation(newPos, movePlayerPacket.yaw, movePlayerPacket.pitch);
+//                        this.newPosition = newPos;
                         this.forceMovement = null;
                     }
 
                     if (riding != null) {
                         if (riding instanceof EntityBoat) {
-                            riding.setPositionAndRotation(this.temporalVector.setComponents(movePlayerPacket.x, movePlayerPacket.y - 1, movePlayerPacket.z), (movePlayerPacket.headYaw + 90) % 360, 0);
+                            riding.setPositionAndRotation(this.temporalVector.setComponents(movePlayerPacket.x, movePlayerPacket.y - 1, movePlayerPacket.z), (movePlayerPacket.yaw + 90) % 360, 0);
                         }
                     }
-
-                    break;
                 case ProtocolInfo.ADVENTURE_SETTINGS_PACKET:
                     //TODO: player abilities, check for other changes
                     AdventureSettingsPacket adventureSettingsPacket = (AdventureSettingsPacket) packet;
