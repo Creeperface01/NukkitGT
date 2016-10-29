@@ -59,7 +59,7 @@ public abstract class Entity extends Location implements Metadatable {
     public static final int DATA_TYPE_LONG = 7;
     public static final int DATA_TYPE_VECTOR3F = 8;
 
-    public static final int DATA_FLAGS = 0;
+    public static final int DATA_FLAGS = 0;  //long
     //1 (int)
     public static final int DATA_VARIANT = 2; //int
     public static final int DATA_COLOUR = 3; //byte
@@ -67,24 +67,25 @@ public abstract class Entity extends Location implements Metadatable {
     public static final int DATA_OWNER_EID = 5; //long
 
     public static final int DATA_AIR = 7; //short
-    /* 8 (int)
-	 * 9 (int)
-	 * 27 (byte) something to do with beds
+    public static final int DATA_POTION_COLOR = 8; //int (ARGB!)
+    public static final int DATA_POTION_AMBIENT = 9; //byte
+    /* 27 (byte) something to do with beds
 	 * 28 (int)
 	 * 29 (block coords) bed position */
     public static final int DATA_LEAD_HOLDER_EID = 38; //long
     public static final int DATA_SCALE = 39; //float
-    public static final int DATA_BUTTON_TEXT = 40; //string
-    /* 41 (long) */
+    public static final int DATA_INTERACTIVE_TAG = 40; //string (button text)
+	/* 41 (long) */
+    public static final int DATA_URL_TAG = 43; //string
     public static final int DATA_MAX_AIR = 44; //short
     public static final int DATA_MARK_VARIANT = 45; //int
-    /* 46 (byte)
-     * 47 (int)
-     * 48 (int)
-     * 49 (long)
-     * 50 (long)
-     * 51 (long)
-     * 52 (short) */
+	/* 46 (byte)
+	 * 47 (int)
+	 * 48 (int)
+	 * 49 (long)
+	 * 50 (long)
+	 * 51 (long)
+	 * 52 (short) */
     public static final int DATA_BOUNDING_BOX_WIDTH = 53; //float
     public static final int DATA_BOUNDING_BOX_HEIGHT = 54; //float
 	/* 56 (vector3f)
@@ -92,24 +93,39 @@ public abstract class Entity extends Location implements Metadatable {
 	 * 58 (float)
 	 * 59 (float) */
 
-	/*
- 	const DATA_SILENT = 4;
- 	const DATA_POTION_COLOR = 7;
- 	const DATA_POTION_AMBIENT = 8;
- 	*/
-
     public static final int DATA_FLAG_ONFIRE = 0;
     public static final int DATA_FLAG_SNEAKING = 1;
     public static final int DATA_FLAG_RIDING = 2;
     public static final int DATA_FLAG_SPRINTING = 3;
     public static final int DATA_FLAG_ACTION = 4;
     public static final int DATA_FLAG_INVISIBLE = 5;
-
+    public static final int DATA_FLAG_TEMPTED = 6; //???
+    public static final int DATA_FLAG_INLOVE = 7;
+    public static final int DATA_FLAG_SADDLED = 8;
+    public static final int DATA_FLAG_POWERED = 9;
+    public static final int DATA_FLAG_IGNITED = 10; //for creepers?
+    public static final int DATA_FLAG_BABY = 11;
+    public static final int DATA_FLAG_CONVERTING = 12; //???
+    public static final int DATA_FLAG_CRITICAL = 13;
     public static final int DATA_FLAG_CAN_SHOW_NAMETAG = 14;
     public static final int DATA_FLAG_ALWAYS_SHOW_NAMETAG = 15;
-    public static final int DATA_FLAG_IMMOBILE = 16;
-
-    public static final int DATA_FLAG_NOT_UNDERWATER = 30; //Hide bubbles if not underwater
+    public static final int DATA_FLAG_IMMOBILE = 16, DATA_FLAG_NO_AI = 16;
+    public static final int DATA_FLAG_SILENT = 17;
+    public static final int DATA_FLAG_WALLCLIMBING = 18;
+    public static final int DATA_FLAG_RESTING = 19; //for bats?
+    public static final int DATA_FLAG_SITTING = 20;
+    public static final int DATA_FLAG_ANGRY = 21;
+    public static final int DATA_FLAG_INTERESTED = 22; //for mobs following players with food?
+    public static final int DATA_FLAG_CHARGED = 23;
+    public static final int DATA_FLAG_TAMED = 24;
+    public static final int DATA_FLAG_LEASHED = 25;
+    public static final int DATA_FLAG_SHEARED = 26; //for sheep
+    public static final int DATA_FLAG_FALL_FLYING = 27; //???
+    public static final int DATA_FLAG_ELDER = 28; //elder guardian
+    public static final int DATA_FLAG_MOVING = 29;
+    public static final int DATA_FLAG_BREATHING = 30; //hides bubbles if true
+    public static final int DATA_FLAG_CHESTED = 31; //for mules?
+    public static final int DATA_FLAG_STACKABLE = 32; //???
 
     public static final int DATA_LEAD_HOLDER = 23;
     public static final int DATA_LEAD = 24;
@@ -125,16 +141,13 @@ public abstract class Entity extends Location implements Metadatable {
 
     protected long id;
 
-    protected int dataFlags = 0;
-
     protected final EntityMetadata dataProperties = new EntityMetadata()
             .putLong(DATA_FLAGS, 0)
             .putShort(DATA_AIR, 400)
-            //.putShort(DATA_MAX_AIR, 400)
+            .putShort(DATA_MAX_AIR, 400)
             .putString(DATA_NAMETAG, "")
-            //.putByte(DATA_SILENT, 0)
-            .putLong(DATA_LEAD_HOLDER, -1);
-            //.putFloat(DATA_SCALE, 1f);
+            .putLong(DATA_LEAD_HOLDER_EID, -1)
+            .putFloat(DATA_SCALE, 1f);
 
     public Entity rider = null;
 
@@ -144,8 +157,7 @@ public abstract class Entity extends Location implements Metadatable {
 
     protected EntityDamageEvent lastDamageCause = null;
 
-    public List<Block> blocksAround = new ArrayList<>();
-    public List<Block> groundBlocks = new ArrayList<>();
+    private List<Block> blocksAround = new ArrayList<>();
 
     public double lastX;
     public double lastY;
@@ -497,11 +509,11 @@ public abstract class Entity extends Location implements Metadatable {
             int g = (color[1] / count) & 0xff;
             int b = (color[2] / count) & 0xff;
 
-            //this.setDataProperty(new IntEntityData(Entity.DATA_POTION_COLOR, (r << 16) + (g << 8) + b));
-            //this.setDataProperty(new ByteEntityData(Entity.DATA_POTION_AMBIENT, ambient ? 1 : 0));
+            this.setDataProperty(new IntEntityData(Entity.DATA_POTION_COLOR, (r << 16) + (g << 8) + b));
+            this.setDataProperty(new ByteEntityData(Entity.DATA_POTION_AMBIENT, ambient ? 1 : 0));
         } else {
-            //this.setDataProperty(new IntEntityData(Entity.DATA_POTION_COLOR, 0));
-            //this.setDataProperty(new ByteEntityData(Entity.DATA_POTION_AMBIENT, 0));
+            this.setDataProperty(new IntEntityData(Entity.DATA_POTION_COLOR, 0));
+            this.setDataProperty(new ByteEntityData(Entity.DATA_POTION_AMBIENT, 0));
         }
     }
 
@@ -905,9 +917,6 @@ public abstract class Entity extends Location implements Metadatable {
 
         boolean hasUpdate = false;
 
-        if (!this.isPlayer) {
-            this.blocksAround = null;
-        }
         this.checkBlockCollision();
 
         if (this.y <= -16 && this.isAlive()) {
@@ -1375,7 +1384,7 @@ public abstract class Entity extends Location implements Metadatable {
                 for (int x = minX; x <= maxX; ++x) {
                     for (int y = minY; y <= maxY; ++y) {
                         Block block = this.level.getBlock(this.temporalVector.setComponents(x, y, z));
-                        if (block.collidesWithBB(this.boundingBox, true)) {
+                        if (block.hasEntityCollision()) {
                             this.blocksAround.add(block);
                         }
                     }
@@ -1669,14 +1678,21 @@ public abstract class Entity extends Location implements Metadatable {
 
     public void setDataFlag(int propertyId, int id, boolean value) {
         if (this.getDataFlag(propertyId, id) != value) {
-            long flags = this.getDataPropertyLong(propertyId);
-            flags ^= 1 << id;
-            this.setDataProperty(new LongEntityData(propertyId, flags));
+            if (propertyId == EntityHuman.DATA_PLAYER_FLAGS) {
+                int flags = this.getDataPropertyByte(propertyId);
+                flags ^= 1 << id;
+                this.setDataProperty(new ByteEntityData(propertyId, flags));
+            } else {
+                long flags = this.getDataPropertyLong(propertyId);
+                flags ^= 1 << id;
+                this.setDataProperty(new LongEntityData(propertyId, flags));
+            }
+
         }
     }
 
     public boolean getDataFlag(int propertyId, int id) {
-        return ((this.getDataPropertyLong(propertyId) & 0xff) & (1 << id)) > 0;
+        return (((propertyId == EntityHuman.DATA_PLAYER_FLAGS ? this.getDataPropertyByte(propertyId) & 0xff : this.getDataPropertyLong(propertyId))) & (1 << id)) > 0;
     }
 
     @Override

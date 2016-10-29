@@ -4,6 +4,8 @@ import cn.nukkit.IPlayer;
 import cn.nukkit.Player;
 import cn.nukkit.command.Command;
 import cn.nukkit.command.CommandSender;
+import cn.nukkit.command.data.CommandParameter;
+import cn.nukkit.command.data.CommandParameterOptional;
 import cn.nukkit.lang.TranslationContainer;
 import cn.nukkit.utils.TextFormat;
 
@@ -16,6 +18,9 @@ public class OpCommand extends VanillaCommand {
     public OpCommand(String name) {
         super(name, "%nukkit.command.op.description", "%commands.op.usage");
         this.setPermission("nukkit.command.op.give");
+        this.commandParameters = new CommandParameter[]{
+                new CommandParameter("player", CommandParameter.ARG_TYPE_TARGET, CommandParameterOptional.FALSE)
+        };
     }
 
     @Override

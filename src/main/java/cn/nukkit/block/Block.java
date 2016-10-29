@@ -576,11 +576,6 @@ public abstract class Block extends Position implements Metadatable, Cloneable {
         return this.getLevel().setBlock(this, this, true, true);
     }
 
-    @Override
-    public Block getLevelBlock() {
-        return this;
-    }
-
     public boolean isBreakable(Item item) {
         return true;
     }
@@ -764,11 +759,7 @@ public abstract class Block extends Position implements Metadatable, Cloneable {
     }
 
     public boolean collidesWithBB(AxisAlignedBB bb) {
-        return collidesWithBB(bb, false);
-    }
-
-    public boolean collidesWithBB(AxisAlignedBB bb, boolean entityCollision) {
-        AxisAlignedBB bb1 = entityCollision ? getCollisionBoundingBox() : this.getBoundingBox();
+        AxisAlignedBB bb1 = this.getBoundingBox();
         return bb1 != null && bb.intersectsWith(bb1);
     }
 
@@ -781,10 +772,6 @@ public abstract class Block extends Position implements Metadatable, Cloneable {
             this.boundingBox = this.recalculateBoundingBox();
         }
         return this.boundingBox;
-    }
-
-    public AxisAlignedBB getCollisionBoundingBox() {
-        return getBoundingBox();
     }
 
     protected AxisAlignedBB recalculateBoundingBox() {

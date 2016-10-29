@@ -134,15 +134,9 @@ public class EntityPotion extends EntityProjectile {
             this.getLevel().addParticle(particle);
 
             hasUpdate = true;
-            Entity[] entities = this.getLevel().getNearbyEntities(this.getBoundingBox().grow(4, 2, 4));
+            Entity[] entities = this.getLevel().getNearbyEntities(this.getBoundingBox().grow(8.25, 4.24, 8.25));
             for (Entity anEntity : entities) {
-                double distance = anEntity.distanceSquared(this);
-
-                if (distance < 16) {
-                    double d = 1 - Math.sqrt(distance) / 4;
-
-                    potion.applyPotion(anEntity, d);
-                }
+                potion.applyPotion(anEntity);
             }
         }
         this.timing.stopTiming();

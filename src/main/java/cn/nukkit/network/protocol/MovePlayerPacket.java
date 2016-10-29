@@ -25,7 +25,7 @@ public class MovePlayerPacket extends DataPacket {
 
     @Override
     public void decode() {
-        eid = getEntityId();
+        eid = this.getEntityId();
         Vector3f v = this.getVector3f();
         this.x = v.x;
         this.y = v.y;
@@ -42,9 +42,12 @@ public class MovePlayerPacket extends DataPacket {
         reset();
         putEntityId(eid);
         putVector3f(x, y, z);
-        putFloat(pitch);
-        putFloat(yaw);
-        putFloat(headYaw);
+        //putLFloat(x);
+        //putLFloat(y);
+        //putLFloat(z);
+        putLFloat(pitch);
+        putLFloat(yaw);
+        putLFloat(headYaw);
         putByte(mode);
         putBoolean(onGround);
     }

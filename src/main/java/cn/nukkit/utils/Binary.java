@@ -1,11 +1,13 @@
 package cn.nukkit.utils;
 
+import cn.nukkit.Server;
 import cn.nukkit.entity.Entity;
 import cn.nukkit.entity.data.*;
 
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.UUID;
@@ -72,9 +74,11 @@ public class Binary {
     public static byte[] writeMetadata(EntityMetadata metadata) {
         BinaryStream stream = new BinaryStream();
         Map<Integer, EntityData> map = metadata.getMap();
+        stream.putVarInt(map.size());
         for (int id : map.keySet()) {
             EntityData d = map.get(id);
-            stream.putByte((byte) (((d.getType() << 5) | (id & 0x1F)) & 0xff));
+            stream.putVarInt(id);
+            stream.putVarInt(d.getType());
             switch (d.getType()) {
                 case Entity.DATA_TYPE_BYTE:
                     stream.putByte(((ByteEntityData) d).getData().byteValue());
@@ -83,14 +87,14 @@ public class Binary {
                     stream.putLShort(((ShortEntityData) d).getData());
                     break;
                 case Entity.DATA_TYPE_INT:
-                    stream.putLInt(((IntEntityData) d).getData());
+                    stream.putSignedVarInt(((IntEntityData) d).getData());
                     break;
                 case Entity.DATA_TYPE_FLOAT:
                     stream.putLFloat(((FloatEntityData) d).getData());
                     break;
                 case Entity.DATA_TYPE_STRING:
                     String s = ((StringEntityData) d).getData();
-                    stream.putLShort(s.getBytes(StandardCharsets.UTF_8).length);
+                    stream.putVarInt(s.getBytes(StandardCharsets.UTF_8).length);
                     stream.put(s.getBytes(StandardCharsets.UTF_8));
                     break;
                 case Entity.DATA_TYPE_SLOT:
@@ -100,18 +104,23 @@ public class Binary {
                     stream.putLShort(slot.count);
                     break;
                 case Entity.DATA_TYPE_POS:
-                    PositionEntityData pos = (PositionEntityData) d;
-                    stream.putLInt(pos.x);
-                    stream.putLInt(pos.y);
-                    stream.putLInt(pos.z);
+                    IntPositionEntityData pos = (IntPositionEntityData) d;
+                    stream.putSignedVarInt(pos.x);
+                    stream.putByte((byte) pos.y);
+                    stream.putSignedVarInt(pos.z);
                     break;
                 case Entity.DATA_TYPE_LONG:
-                    stream.putLLong(((LongEntityData) d).getData());
+                    stream.putVarLong(((LongEntityData) d).getData());
+                    break;
+                case Entity.DATA_TYPE_VECTOR3F:
+                    Vector3fEntityData v3data = (Vector3fEntityData) d;
+                    stream.putFloat(v3data.x);
+                    stream.putFloat(v3data.y);
+                    stream.putFloat(v3data.z);
                     break;
             }
         }
-
-        stream.putByte((byte) 0x7f);
+        //stream.putByte((byte) 0x7f);
         return stream.getBuffer();
     }
 
@@ -164,7 +173,7 @@ public class Binary {
                         intArray[i] = readLInt(subBytes(payload, offset, 4));
                         offset += 4;
                     }
-                    data = new PositionEntityData(id, intArray[0], intArray[1], intArray[2]);
+                    data = new IntPositionEntityData(id, intArray[0], intArray[1], intArray[2]);
                     break;
                 case Entity.DATA_TYPE_LONG:
                     data = new LongEntityData(id, readLLong(subBytes(payload, offset, 4)));
@@ -407,6 +416,10 @@ public class Binary {
         return writeUnsignedVarInt((v << 1) ^ (v >> 31));
     }
 
+    public static byte[] writeVarInt64(long v){
+        return writeUnsignedVarInt64((v << 1) ^ (v >> 63));
+    }
+
     public static byte[] writeUnsignedVarInt(long v) {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         int loops = 0;
@@ -423,6 +436,16 @@ public class Binary {
             ++loops;
         } while (v != 0);
         return stream.toByteArray();
+    }
+
+    public static byte[] writeUnsignedVarInt64(long v){
+        ByteArrayOutputStream buf = new ByteArrayOutputStream();
+        while((v & 0xFFFFFFFFFFFFFF80L) != 0){
+            buf.write(((byte) v & 0x7f) | 0x80);
+            v >>= 7;
+        }
+        buf.write((byte)v);
+        return buf.toByteArray();
     }
 
     public static byte[] reserveBytes(byte[] bytes) {

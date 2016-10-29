@@ -3,6 +3,8 @@ package cn.nukkit.command.defaults;
 import cn.nukkit.Player;
 import cn.nukkit.command.Command;
 import cn.nukkit.command.CommandSender;
+import cn.nukkit.command.data.CommandParameter;
+import cn.nukkit.command.data.CommandParameterOptional;
 import cn.nukkit.item.Item;
 import cn.nukkit.lang.TranslationContainer;
 import cn.nukkit.utils.TextFormat;
@@ -15,6 +17,12 @@ public class GiveCommand extends VanillaCommand {
     public GiveCommand(String name) {
         super(name, "%nukkit.command.give.description", "%nukkit.command.give.usage");
         this.setPermission("nukkit.command.give");
+        this.commandParameters = new CommandParameter[]{
+                new CommandParameter("player", CommandParameter.ARG_TYPE_TARGET, CommandParameterOptional.FALSE),
+                new CommandParameter("item[:damage]"),
+                new CommandParameter("amount", CommandParameter.ARG_TYPE_INT, CommandParameterOptional.TRUE),
+                new CommandParameter("tags...")
+        };
     }
 
     @Override

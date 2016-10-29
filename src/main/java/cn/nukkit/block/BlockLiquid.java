@@ -49,11 +49,7 @@ public abstract class BlockLiquid extends BlockTransparent {
 
     @Override
     public AxisAlignedBB getBoundingBox() {
-        if(this.boundingBox == null){
-            this.boundingBox = new AxisAlignedBB(this.x, this.y, this.z, this.x + 1, this.y + getFluidHeightPercent(), this.z + 1);
-        }
-
-        return this.boundingBox;
+        return null;
     }
 
     public float getFluidHeightPercent() {

@@ -65,9 +65,9 @@ import cn.nukkit.potion.Effect;
 import cn.nukkit.potion.Potion;
 import cn.nukkit.scheduler.FileWriteTask;
 import cn.nukkit.scheduler.ServerScheduler;
-import cn.nukkit.service.ServiceManager;
 import cn.nukkit.timings.Timings;
 import cn.nukkit.utils.*;
+
 import java.io.*;
 import java.nio.ByteOrder;
 import java.util.*;
@@ -96,8 +96,6 @@ public class Server {
     private boolean hasStopped = false;
 
     private PluginManager pluginManager = null;
-
-    private ServiceManager serviceManager = null;
 
     private int profilingTickrate = 20;
 
@@ -361,16 +359,14 @@ public class Server {
         this.registerBlockEntities();
 
         Block.init();
+        Enchantment.init();
         Item.init();
         Biome.init();
         Effect.init();
         Potion.init();
-        Enchantment.init();
         Attribute.init();
 
         this.craftingManager = new CraftingManager();
-
-        this.serviceManager = new ServiceManager();
 
         this.pluginManager = new PluginManager(this, this.commandMap);
         this.pluginManager.subscribeToPermission(Server.BROADCAST_CHANNEL_ADMINISTRATIVE, this.consoleSender);
@@ -944,6 +940,7 @@ public class Server {
                 }
 
                 this.logger.critical(this.getLanguage().translateString("nukkit.level.tickError", new String[]{level.getName(), e.toString()}));
+                this.logger.logException(e);
             }
         }
     }
@@ -1287,10 +1284,6 @@ public class Server {
         return levelMetadata;
     }
 
-    public ServiceManager getServiceManager() {
-        return this.serviceManager;
-    }
-
     public PluginManager getPluginManager() {
         return this.pluginManager;
     }
@@ -1356,6 +1349,19 @@ public class Server {
 
     public CompoundTag getOfflinePlayerData(String name) {
         name = name.toLowerCase();
+        String path = this.getDataPath() + "players/";
+        File file = new File(path + name + ".dat");
+
+        if (this.shouldSavePlayerData() && file.exists()) {
+            try {
+                return NBTIO.readCompressed(new FileInputStream(file));
+            } catch (Exception e) {
+                file.renameTo(new File(path + name + ".dat.bak"));
+                this.logger.notice(this.getLanguage().translateString("nukkit.data.playerCorrupted", name));
+            }
+        } else {
+            this.logger.notice(this.getLanguage().translateString("nukkit.data.playerNotFound", name));
+        }
 
         Position spawn = this.getDefaultLevel().getSafeSpawn();
         CompoundTag nbt = new CompoundTag()
@@ -1383,6 +1389,7 @@ public class Server {
                 .putBoolean("Invulnerable", false)
                 .putString("NameTag", name);
 
+        this.saveOfflinePlayerData(name, nbt);
         return nbt;
     }
 

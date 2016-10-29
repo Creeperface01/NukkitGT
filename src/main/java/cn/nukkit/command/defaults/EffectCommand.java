@@ -3,6 +3,8 @@ package cn.nukkit.command.defaults;
 import cn.nukkit.Player;
 import cn.nukkit.command.Command;
 import cn.nukkit.command.CommandSender;
+import cn.nukkit.command.data.CommandParameter;
+import cn.nukkit.command.data.CommandParameterOptional;
 import cn.nukkit.lang.TranslationContainer;
 import cn.nukkit.potion.Effect;
 import cn.nukkit.potion.InstantEffect;
@@ -17,6 +19,13 @@ public class EffectCommand extends Command {
     public EffectCommand(String name) {
         super(name, "%nukkit.command.effect.description", "%commands.effect.usage");
         this.setPermission("nukkit.command.effect");
+        this.commandParameters = new CommandParameter[]{
+                new CommandParameter("player", CommandParameter.ARG_TYPE_TARGET, CommandParameterOptional.FALSE),
+                new CommandParameter("effect"),
+                new CommandParameter("seconds", CommandParameter.ARG_TYPE_INT, CommandParameterOptional.TRUE),
+                new CommandParameter("amplifier", CommandParameterOptional.TRUE),
+                new CommandParameter("hideParticle", CommandParameter.ARG_TYPE_BOOL, CommandParameterOptional.TRUE)
+        };
     }
 
     @Override

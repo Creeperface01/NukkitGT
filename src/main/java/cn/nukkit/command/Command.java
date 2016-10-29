@@ -2,23 +2,14 @@ package cn.nukkit.command;
 
 import cn.nukkit.Player;
 import cn.nukkit.Server;
-import cn.nukkit.command.data.CommandData;
-import cn.nukkit.command.data.CommandOverload;
-import cn.nukkit.command.data.CommandParameter;
+import cn.nukkit.command.data.*;
 import cn.nukkit.lang.TextContainer;
 import cn.nukkit.lang.TranslationContainer;
 import cn.nukkit.permission.Permissible;
-import cn.nukkit.permission.Permission;
 import cn.nukkit.timings.Timing;
 import cn.nukkit.timings.Timings;
 import cn.nukkit.utils.TextFormat;
-import com.google.gson.Gson;
-import com.google.gson.stream.JsonReader;
 
-import java.io.FileReader;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -51,6 +42,8 @@ public abstract class Command {
     private String permission = null;
 
     private String permissionMessage = null;
+
+    protected CommandParameter[] commandParameters = new CommandParameter[]{new CommandParameter("args", "rawtext", CommandParameterOptional.TRUE)};
 
     public Timing timing;
 
@@ -87,25 +80,36 @@ public abstract class Command {
         return this.commandData;
     }
 
+    public CommandParameter[] getCommandParameters() {
+        return commandParameters;
+    }
+
+    public void setCommandParameters(CommandParameter[] commandParameters) {
+        this.commandParameters = commandParameters;
+    }
+
     /**
      * Generates modified command data for the specified player
      * for AvailableCommandsPacket.
      *
      * @return CommandData|null
      */
-    public CommandData generateCustomCommandData(Player player){
+    public CommandDataVersions generateCustomCommandData(Player player){
         if(!this.testPermission(player)){
             return null;
         }
+
         CommandData customData = this.commandData.clone();
         customData.aliases = this.getAliases();
         customData.description = player.getServer().getLanguage().translateString(this.getDescription());
         customData.permission = player.hasPermission(this.getPermission()) ? "any" : "false";
         CommandOverload overload = new CommandOverload();
-        overload.input.parameters.add(new CommandParameter("test", "rawtext", false));
+        overload.input.parameters = this.commandParameters;
         customData.overloads.put("default", overload);
 
-        return customData;
+        CommandDataVersions versions = new CommandDataVersions();
+        versions.versions.add(customData);
+        return versions;
     }
 
     public Map<String, CommandOverload> getOverloads(){
