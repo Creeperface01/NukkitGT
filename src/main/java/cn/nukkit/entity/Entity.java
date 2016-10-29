@@ -157,7 +157,8 @@ public abstract class Entity extends Location implements Metadatable {
 
     protected EntityDamageEvent lastDamageCause = null;
 
-    private List<Block> blocksAround = new ArrayList<>();
+    public List<Block> blocksAround = new ArrayList<>();
+    public List<Block> groundBlocks = new ArrayList<>();
 
     public double lastX;
     public double lastY;
@@ -917,6 +918,9 @@ public abstract class Entity extends Location implements Metadatable {
 
         boolean hasUpdate = false;
 
+        if (!this.isPlayer) {
+            this.blocksAround = null;
+        }
         this.checkBlockCollision();
 
         if (this.y <= -16 && this.isAlive()) {
@@ -1384,7 +1388,7 @@ public abstract class Entity extends Location implements Metadatable {
                 for (int x = minX; x <= maxX; ++x) {
                     for (int y = minY; y <= maxY; ++y) {
                         Block block = this.level.getBlock(this.temporalVector.setComponents(x, y, z));
-                        if (block.hasEntityCollision()) {
+                        if (block.collidesWithBB(this.boundingBox, true)) {
                             this.blocksAround.add(block);
                         }
                     }
