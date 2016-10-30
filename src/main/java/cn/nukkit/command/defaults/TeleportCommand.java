@@ -1,6 +1,5 @@
 package cn.nukkit.command.defaults;
 
-
 import cn.nukkit.Player;
 import cn.nukkit.command.Command;
 import cn.nukkit.command.CommandSender;
@@ -10,7 +9,6 @@ import cn.nukkit.lang.TranslationContainer;
 import cn.nukkit.level.Location;
 import cn.nukkit.math.NukkitMath;
 import cn.nukkit.utils.TextFormat;
-
 
 /**
  * Created on 2015/11/12 by Pub4Game and milkice.
