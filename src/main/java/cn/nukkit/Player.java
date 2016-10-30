@@ -1024,10 +1024,14 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
     }
 
     public boolean setGamemode(int gamemode) {
-        return this.setGamemode(gamemode, null);
+        return this.setGamemode(gamemode, false, null);
     }
 
-    public boolean setGamemode(int gamemode, AdventureSettings newSettings) {
+    public boolean setGamemode(int gamemode, boolean clientSide) {
+        return this.setGamemode(gamemode, clientSide, null);
+    }
+
+    public boolean setGamemode(int gamemode, boolean clientSide, AdventureSettings newSettings) {
         if (gamemode < 0 || gamemode > 3 || this.gamemode == gamemode) {
             return false;
         }
@@ -1037,7 +1041,7 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
             newSettings.setCanDestroyBlock((gamemode & 0x02) == 0);
             newSettings.setCanFly((gamemode & 0x01) > 0);
             newSettings.setNoclip(gamemode == 0x03);
-            newSettings.setFlying(this.isSpectator());
+            newSettings.setFlying(gamemode == 0x03);
         }
 
         PlayerGameModeChangeEvent ev;
@@ -1059,9 +1063,11 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
 
         this.namedTag.putInt("playerGameType", this.gamemode);
 
-        SetPlayerGameTypePacket pk = new SetPlayerGameTypePacket();
-        pk.gamemode = this.gamemode & 0x01;
-        this.dataPacket(pk);
+        if (!clientSide) {
+            SetPlayerGameTypePacket pk = new SetPlayerGameTypePacket();
+            pk.gamemode = this.gamemode & 0x01;
+            this.dataPacket(pk);
+        }
 
         this.setAdventureSettings(ev.getNewAdventureSettings());
 
@@ -3304,7 +3310,7 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
                 case ProtocolInfo.REQUEST_CHUNK_RADIUS_PACKET:
                     RequestChunkRadiusPacket requestChunkRadiusPacket = (RequestChunkRadiusPacket) packet;
                     ChunkRadiusUpdatedPacket chunkRadiusUpdatePacket = new ChunkRadiusUpdatedPacket();
-                    this.chunkRadius = Math.max(5, Math.min(requestChunkRadiusPacket.radius, this.viewDistance));
+                    this.chunkRadius = Math.max(5, Math.min((int)requestChunkRadiusPacket.radius, this.viewDistance));
                     chunkRadiusUpdatePacket.radius = this.chunkRadius;
                     this.dataPacket(chunkRadiusUpdatePacket);
                     break;
@@ -3318,7 +3324,8 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
                             this.getAdventureSettings().update();
                             break;
                         }
-                        this.setGamemode(setPlayerGameTypePacket.gamemode);
+                        this.setGamemode(setPlayerGameTypePacket.gamemode, true);
+                        Command.broadcastCommandMessage(this, new TranslationContainer("commands.gamemode.success.self", Server.getGamemodeString(this.gamemode)));
                     }
                     break;
                 case ProtocolInfo.ITEM_FRAME_DROP_ITEM_PACKET:

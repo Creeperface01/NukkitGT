@@ -95,7 +95,7 @@ public class Binary {
                     break;
                 case Entity.DATA_TYPE_STRING:
                     String s = ((StringEntityData) d).getData();
-                    stream.putVarInt(s.getBytes(StandardCharsets.UTF_8).length);
+                    stream.putUnsignedVarInt(s.getBytes(StandardCharsets.UTF_8).length);
                     stream.put(s.getBytes(StandardCharsets.UTF_8));
                     break;
                 case Entity.DATA_TYPE_SLOT:
@@ -395,9 +395,10 @@ public class Binary {
         BigInteger temp = raw.shiftLeft(63).shiftRight(63).xor(raw).shiftRight(1);
         return temp.xor(raw.and(BigInteger.ONE.shiftLeft(63))).longValue();
     }
+    
 
-    public static byte[] writeVarLong(BigInteger v){
-        return writeUnsignedVarLong(v.shiftLeft(1).xor(v.shiftRight(63)));
+    public static byte[] writeVarLong(long v){
+        return writeUnsignedVarLong((v << 1) ^ (v >> 63));
     }
 
     public static BigInteger readUnsignedVarLong(BinaryStream stream){
@@ -414,10 +415,18 @@ public class Binary {
         return value.or(BigInteger.valueOf(b << i));
     }
 
+    public static byte[] writeUnsignedVarLong(long v) {
+        return writeUnsignedVarLong(BigInteger.valueOf(v));
+    }
+
     public static byte[] writeUnsignedVarLong(BigInteger v){
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
-        while(!v.and(BigInteger.valueOf(0xFFFFFFFFFFFFFF80L)).equals(BigInteger.ZERO)){
-            buf.write((byte) (v.and(BigInteger.valueOf(0x7f)).longValue() | 0x80));
+        v = v.and(new BigInteger("ffffffffffffffff", 16));
+        BigInteger b1 = BigInteger.valueOf(0xFFFFFFFFFFFFFF80L);
+        BigInteger b2 = BigInteger.valueOf(0x7f);
+        BigInteger b3 = BigInteger.valueOf(0x80);
+        while (!v.and(b1).equals(BigInteger.ZERO)) {
+            buf.write(v.and(b2).or(b3).byteValue());
             v = v.shiftRight(7);
         }
         buf.write(v.byteValue());
